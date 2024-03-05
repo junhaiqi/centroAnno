@@ -72,7 +72,7 @@ If the above example runs successfully, the folder 'test' will be the following 
 None.
 
 ## License 
-None.
+MIT License
 
 ## Cite
 None.
