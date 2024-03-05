@@ -7,7 +7,6 @@
 static std::vector<std::string> extractDigits(const std::string& inputString);
 
 int countElementOccurrences(const std::vector<int>& vec, int targetElement) {
-    // 使用 std::count 算法计算目标元素的出现次数
     int occurrences = std::count(vec.begin(), vec.end(), targetElement);
     return occurrences;
 }
@@ -17,7 +16,6 @@ int main(int argc, char* argv[]){
 
     int targetElement = 2;
 
-    // 计算目标元素在 vector 中的出现次数
     int occurrences = countElementOccurrences(numbers, targetElement);
 
     std::cout << "Element " << targetElement << " occurs " << occurrences << " times." << std::endl;
