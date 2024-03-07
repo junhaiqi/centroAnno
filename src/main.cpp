@@ -41,6 +41,10 @@ static void depSeq2Monoblock(const char *fn, int &windowSize,
   while (kseq_read(ks) >= 0) {
     std::string seq = ks->seq.s;
     std::string name = ks->name.s;
+    if (seq.length() < 5000) {
+      std::cout << "The length of " << name << " is less than 5000 and is not suitable for repeat annotation." << std::endl;
+      continue;
+    }
     windowSize = seq.length() > windowSize ? windowSize : seq.length();
     SEQ mySeq(seq.substr(0, windowSize),
               name); // Extract seuence to infer monomer template.
@@ -53,7 +57,7 @@ static void depSeq2Monoblock(const char *fn, int &windowSize,
                         repCutoff);
       if (bestMonos.empty()) {
         std::cout << name << " may not be a reapeating sequence.\n";
-        return;
+        continue;
       }
     }
 
