@@ -75,7 +75,7 @@ KC::KMERCOUNTER(const std::string &sequence, const int &k)
 void KC::countKmer() {
   if (k > seq.length()){
     printf("Too large k (too short sequence)!");
-    exit(-1);
+    return;
   }
   // std::transform(seq.begin(), seq.end(), seq.begin(), ::toupper);
   for (size_t i = 0; i <= seq.length() - k; ++i) {
