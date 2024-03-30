@@ -47,6 +47,7 @@ public:
                      const int &kCountCutoff); // select kmers to get monomer by FPS.
   std::vector<int> calKmerDistList(const std::string &kmer); // get kmer distance.
   bool checkRepeative(const float &cutoff); // check for repeatability
+  double getRepeatRedio();
   void printCounter();
   void printKmers();
 
