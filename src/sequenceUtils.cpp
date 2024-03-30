@@ -74,7 +74,7 @@ KC::KMERCOUNTER(const std::string &sequence, const int &k)
 
 void KC::countKmer() {
   if (k > seq.length()){
-    printf("Too large k (too short sequence)!");
+    // printf("Too large k (too short sequence)!");
     return;
   }
   // std::transform(seq.begin(), seq.end(), seq.begin(), ::toupper);
@@ -141,18 +141,35 @@ std::vector<int> KC::calKmerDistList(const std::string &kmer) {
 bool KC::checkRepeative(const float &cutoff){
   if (h.empty())
     countKmer();
-  int nonUniqueNum = 0;
+  size_t totalNum = 0;
+  size_t repNum = 0;
   for (auto &key : h){
-    if (key.second.size() > 1){
-      nonUniqueNum++;
+    totalNum += key.second.size();
+    if (key.second.size() > 1) {
+      repNum += key.second.size();
     }
   }
   bool repeative = false;
-  repeativeScore = static_cast<float>(nonUniqueNum) / h.size();
+  repeativeScore = static_cast<double>(repNum) / totalNum;
   if (repeativeScore > cutoff){
     repeative = true;
   };
   return repeative;
+}
+
+double KC::getRepeatRedio() {
+  if (h.empty())
+    countKmer();
+  size_t totalNum = 0;
+  size_t repNum = 0;
+  for (auto &key : h){
+    totalNum += key.second.size();
+    if (key.second.size() > 1) {
+      repNum += key.second.size();
+    }
+  }
+  repeativeScore = static_cast<double>(repNum) / totalNum;
+  return repeativeScore;
 }
 
 void KC::printCounter() {

@@ -15,12 +15,4 @@ void msaAndConsensus(const std::vector<std::string> &seqList,
 
   consensus = graph.GenerateConsensus();
 
-//   std::cerr << ">Consensus LN:i:" << consensus.size() << std::endl
-//             << consensus << std::endl;
-
-//   auto msa = graph.GenerateMultipleSequenceAlignment();
-
-//   for (const auto &it : msa) {
-//     std::cerr << it << std::endl;
-//   }
 }

@@ -32,17 +32,44 @@ static void depSeq2Monoblock(const char *fn, int &windowSize,
                              const float &fpsCutoff, const float &epsilon,
                              const std::string &outDir,
                              const char *monoTemFa = "",
-                             const int maxHORLen = 50) {
+                             const int maxHORLen = 50,
+                             const int lengthCutoff = 5000,
+                             const bool onlyScan = false) {
   gzFile fp;
   kseq_t *ks;
   if ((fp = gzopen(fn, "r")) == 0)
     return;
   ks = kseq_init(fp);
+  if (onlyScan) {
+    while (kseq_read(ks) >= 0) {
+      std::string seq = ks->seq.s;
+      std::string name = ks->name.s;
+      if (seq.length() < lengthCutoff) {
+        continue;
+      }
+      windowSize = seq.length() > windowSize ? windowSize : seq.length();
+      SEQ sequence(seq.substr(0, windowSize), name);
+      KC kCounter(sequence.seq, k); // kmer counter
+
+      if (hpc) {
+
+        sequence.compressSeq();          // HPC
+        kCounter.seq = sequence.compSeq; // kmer counter
+      }
+
+      double rep = kCounter.getRepeatRedio();
+      if (rep >= repCutoff) {
+        std::cout << ">" << name << "\n";
+        std::cout << seq << "\n";
+      }
+    }
+    return;
+  }
   while (kseq_read(ks) >= 0) {
     std::string seq = ks->seq.s;
     std::string name = ks->name.s;
-    if (seq.length() < 5000) {
-      std::cout << "The length of " << name << " is less than 5000 and is not suitable for repeat annotation." << std::endl;
+    if (seq.length() < lengthCutoff) {
+      std::cout << "The length of " << name << " is less than " << lengthCutoff << " and is not suitable for repeat annotation." << std::endl;
       continue;
     }
     windowSize = seq.length() > windowSize ? windowSize : seq.length();
@@ -91,7 +118,6 @@ static void depSeq2Monoblock(const char *fn, int &windowSize,
     std::vector<HORINFO> horDecompBlockRes;
     std::vector<std::string> cleanedHORs;    // format is name, like 2_1_3...
     std::vector<std::string> cleanedHORSeqs; // format is base sequence
-    // std::cout << "refine pass\n";
     inferHORs(newDemcompBlockRes, refinedBestMonomerTems, longSequence.seq,
               horDecompBlockRes, cleanedHORs, cleanedHORSeqs, maxHORLen);
 
@@ -115,7 +141,9 @@ int main(int argc, char *argv[]) {
   float epsilon = 0.95;
   char *monoTemFaFile = "";
   int maxHORLen = 50;
-  while ((c = ketopt(&o, argc, argv, 1, "o:k:f:r:w:c:e:t:m:M:", 0)) >= 0) {
+  int lengthCutoff = 5000;
+  bool onlyScan = false;
+  while ((c = ketopt(&o, argc, argv, 1, "o:k:f:r:w:c:e:t:m:M:L:S:", 0)) >= 0) {
     if (c == 'o') {
       if (o.arg == 0) {
         fprintf(stderr, "Error: -o requires an argument.\n");
@@ -180,6 +208,20 @@ int main(int argc, char *argv[]) {
 
     else if (c == 'M')
       maxHORLen = atoi(o.arg);
+    
+    else if (c == 'L') {
+      lengthCutoff = atoi(o.arg);
+    
+      if (lengthCutoff < 1000) {
+        fprintf(stderr, "Warning: the value of -L is recommended to be greater "
+                        "than 1000.\n");
+        return 1;
+      }
+    }
+
+    else if (c == 'S')
+      onlyScan = true;
+      
   }
   if (outDir.empty() || argc - o.ind < 1) {
     fprintf(stderr, "Usage: %s [Options:] <in.fa>\n", argv[0]);
@@ -202,12 +244,18 @@ int main(int argc, char *argv[]) {
                     "inference [default = 8]\n");
     fprintf(stderr, "  -M INT     Specify the maximum number of monomers that "
                     "a HOR can contain [default = 50]\n");
+    fprintf(stderr, "  -L INT     Specify the length cutoff that "
+                    "the annotated sequence needs to meet [default = 5000]\n");
+    fprintf(stderr, "  -S INT     Specify the repeated sequences are scanned "
+                    "out without annotation [default = false]\n");
     fprintf(stderr, "  example command: %s -o test test.fa\n", argv[0]);
     return 1;
   }
-  
+
   createDirectory(outDir);
   depSeq2Monoblock(argv[o.ind], windowSize, repCutoff, hpc, k, threadNum,
-                   fpsCutoff, epsilon, outDir, monoTemFaFile, maxHORLen);
+                   fpsCutoff, epsilon, outDir, monoTemFaFile, maxHORLen,
+                   lengthCutoff, onlyScan);
+
   return 0;
 }
