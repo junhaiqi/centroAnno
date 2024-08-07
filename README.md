@@ -1,6 +1,6 @@
 
 ## Overview of centroAnno
-centroAnno is a prior-independent tool for automatic and efficient centromere structural analysis across multiple species. In addition, we built a pipeline based on centroAnno to analyze repeats and HOR from noisy sequencing data, named [CentroRepeatAnalyzer](https://github.com/junhaiqi/CentroRepeatAnalyzer.git).
+centroAnno is a prior-independent tool for automatic and efficient centromere (tendem repeat) structural analysis across multiple species. In addition, we built a pipeline based on centroAnno to analyze repeats and HOR from noisy sequencing data, named [CentroRepeatAnalyzer](https://github.com/junhaiqi/CentroRepeatAnalyzer.git).
 ## Table of contents
 
   * [Requirements](#requirements)
@@ -47,6 +47,7 @@ The specific parameters are as follows:
    | -M  | Specify the maximum number of monomers that a HOR can contain [default = 50] |
    | -L  | Specify the length cutoff that the annotated sequence needs to meet [default = 5000] |
    | -S  | Specify the repeated sequences are scanned out without annotation [default = false] |
+   | -G  | Specify the tendem repeat of genome are annotated [default = false] |
 
 ## Example
 Analyze the structure of centromere without template information:
