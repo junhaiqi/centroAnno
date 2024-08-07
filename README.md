@@ -1,6 +1,6 @@
 
 ## Overview of centroAnno
-centroAnno is a prior-independent tool for automatic and efficient centromere (tendem repeat) structural analysis across multiple species. In addition, we built a pipeline based on centroAnno to analyze repeats and HOR from noisy sequencing data, named [CentroRepeatAnalyzer](https://github.com/junhaiqi/CentroRepeatAnalyzer.git).
+centroAnno is a prior-independent tool for automatic and efficient centromere/tendem repeat structural analysis across multiple species.  In addition, we built a pipeline based on centroAnno to analyze repeats and HOR from noisy sequencing data, named [CentroRepeatAnalyzer](https://github.com/junhaiqi/CentroRepeatAnalyzer.git).
 ## Table of contents
 
   * [Requirements](#requirements)
