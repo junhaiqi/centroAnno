@@ -1,6 +1,6 @@
 
 ## Overview of centroAnno
-centroAnno is a prior-independent tool for automatic and efficient centromere/tendem repeat structural analysis across multiple species.  In addition, we built a pipeline based on centroAnno to analyze repeats and HOR from noisy sequencing data, named [CentroRepeatAnalyzer](https://github.com/junhaiqi/CentroRepeatAnalyzer.git).
+centroAnno is a prior-independent tool for automatic and efficient centromere/tendem repeat structural analysis across multiple species. centroAnno supports the analysis of repeat units and higher-order tandem repeat units (HORs) in genome/assembly, centromere sequence, and single sequencing long reads. In addition, we built a pipeline based on centroAnno to analyze repeats and HOR from noisy sequencing data, named [CentroRepeatAnalyzer](https://github.com/junhaiqi/CentroRepeatAnalyzer.git).
 ## Table of contents
 
   * [Requirements](#requirements)
@@ -50,15 +50,21 @@ The specific parameters are as follows:
    | -G  | Specify the tendem repeat of genome are annotated [default = false] |
 
 ## Example
-Analyze the structure of centromere without template information:
+Analyze the structure of centromere without template information from a given centromere sequence:
 ```bash
 ./centroAnno example/cen21.fa -o example/test
 ```
 
-Analyze the structure of centromere using template information:
+Analyze the structure of centromere using template information from a given centromere sequence:
 
 ```bash
 ./centroAnno example/cen21.fa -o example/test -m example/AlphaSat.fa
+```
+
+Analyze the tendem repeat unit and HOR from a given genome/assembly/long sequencing read:
+
+```bash
+./centroAnno example/simulated_genome.fasta -o example/test -G true
 ```
 
 ## Output
