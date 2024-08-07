@@ -1,3 +1,4 @@
+#include "genome.h"
 #include "hor.h"
 #include "ketopt.h"
 #include "kseq.h"
@@ -6,7 +7,7 @@
 #include "monomer.h"
 #include "moutput.h"
 #include "sequenceUtils.h"
-
+#include "version_centroAnno.h"
 
 KSEQ_INIT(gzFile, gzread)
 
@@ -68,6 +69,7 @@ static void depSeq2Monoblock(const char *fn, int &windowSize,
   while (kseq_read(ks) >= 0) {
     std::string seq = ks->seq.s;
     std::string name = ks->name.s;
+    std::cout << "Sequence Length: " << seq.length() << "\n";
     if (seq.length() < lengthCutoff) {
       std::cout << "The length of " << name << " is less than " << lengthCutoff << " and is not suitable for repeat annotation." << std::endl;
       continue;
@@ -128,6 +130,101 @@ static void depSeq2Monoblock(const char *fn, int &windowSize,
   gzclose(fp);
 }
 
+void annoGenome(const char *fn, int &windowSize, const float &repCutoff,
+                const bool &hpc, const int &k, const int &threadNum,
+                const float &fpsCutoff, const float &epsilon,
+                const std::string &outDir, const char *monoTemFa = "",
+                const int maxHORLen = 50, const int lengthCutoff = 5000,
+                const bool onlyScan = false) {
+  gzFile fp;
+  kseq_t *ks;
+  if ((fp = gzopen(fn, "r")) == 0)
+    return;
+  ks = kseq_init(fp);
+
+  while (kseq_read(ks) >= 0) {
+    std::string seq = ks->seq.s;
+    std::string name = ks->name.s;
+    std::cout << "Sequence Length: " << seq.length() << "\n";
+    if (seq.length() < lengthCutoff) {
+      std::cout << "The length of " << name << " is less than " << lengthCutoff << " and is not suitable for repeat annotation." << std::endl;
+      continue;
+    }
+
+    std::vector<std::pair<int, int>> repRegions;
+    SEQ sequence(seq, name);
+    std::cout << "Detecting tandem repeat regions in the genome...\n";
+    repeatRegionInference(sequence, k, repCutoff, lengthCutoff, hpc,
+                          repRegions);
+    std::cout << "Detecting end.\n";
+    std::cout << "There are " << repRegions.size() << " regions.\n";
+    std::cout << "\n";
+
+    for (size_t i = 0; i < repRegions.size(); ++i) {
+      std::cout << "***************************" << "Region " << i << ":Pos:" << repRegions[i].first << ":" << repRegions[i].second << "***************************\n";
+      std::string thisSeq = seq.substr( repRegions[i].first, repRegions[i].second - repRegions[i].first );
+      std::string this_name = name + "_" + std::to_string(repRegions[i].first) + "_" + std::to_string(repRegions[i].second);
+      windowSize = thisSeq.length() > windowSize ? windowSize : thisSeq.length();
+      SEQ mySeq(thisSeq.substr(0, windowSize),
+                this_name); // Extract seuence to infer monomer template.
+
+      std::vector<std::string> monoSeqs;
+      std::vector<SEQ> bestMonos;
+
+      if (monoTemFa == "") {
+        monoTempInference(mySeq, k, fpsCutoff, 4, monoSeqs, bestMonos, hpc,
+                          repCutoff);
+        if (bestMonos.empty()) {
+          std::cout << name << " may not be a reapeating sequence.\n";
+          continue;
+        }
+      }
+
+      else {
+        loadMonoTemps(monoTemFa, bestMonos);
+      }
+
+      std::vector<MonomerAlignment> demcompBlockRes;
+      demcomposer2(mySeq, bestMonos, demcompBlockRes, 1);
+      // NOTE: the above code needs to be modified when our method is applied to
+      // more general sequences.
+
+      vector<int> clusterLabels;
+      vector<std::string> refinedBestMonomerTems; // Final monomer templates.
+      sampleClustering(mySeq, demcompBlockRes, clusterLabels,
+                       refinedBestMonomerTems, threadNum, epsilon);
+
+      const SEQ longSequence(thisSeq, this_name);
+      vector<MonomerAlignment> newDemcompBlockRes;
+      const std::string demResFileName =
+          outDir + "/" + this_name + "_decomposedResult.csv";
+      const std::string horDemResFileName =
+          outDir + "/" + this_name + "_horDecomposedResult.csv";
+      const std::string monoTemsFileName =
+          outDir + "/" + this_name + "_monomerTemplates.fa";
+      const std::string horFileName = outDir + "/" + this_name + "_HORs.fa";
+      refineDemcompose(longSequence, refinedBestMonomerTems, newDemcompBlockRes,
+                       threadNum, hpc, k, fpsCutoff, repCutoff, demResFileName,
+                       monoTemsFileName);
+
+      std::vector<HORINFO> horDecompBlockRes;
+      std::vector<std::string> cleanedHORs;    // format is name, like 2_1_3...
+      std::vector<std::string> cleanedHORSeqs; // format is base sequence
+      inferHORs(newDemcompBlockRes, refinedBestMonomerTems, longSequence.seq,
+                horDecompBlockRes, cleanedHORs, cleanedHORSeqs, maxHORLen);
+
+      writeHORDecomposeRes(horDecompBlockRes, horDemResFileName);
+      writeInferedHORs(cleanedHORs, cleanedHORSeqs, horFileName);
+
+      std::cout << "***************************" << "Region " << i << ":Pos:" << repRegions[i].first << ":" << repRegions[i].second << "***************************\n";
+      std::cout << "\n";
+    }
+  }
+
+  kseq_destroy(ks);
+  gzclose(fp);
+}
+
 int main(int argc, char *argv[]) {
   ketopt_t o = KETOPT_INIT;
   int32_t c;
@@ -143,7 +240,8 @@ int main(int argc, char *argv[]) {
   int maxHORLen = 50;
   int lengthCutoff = 5000;
   bool onlyScan = false;
-  while ((c = ketopt(&o, argc, argv, 1, "o:k:f:r:w:c:e:t:m:M:L:S:", 0)) >= 0) {
+  bool genome = false;
+  while ((c = ketopt(&o, argc, argv, 1, "o:k:f:r:w:c:e:t:m:M:L:S:G:", 0)) >= 0) {
     if (c == 'o') {
       if (o.arg == 0) {
         fprintf(stderr, "Error: -o requires an argument.\n");
@@ -222,8 +320,12 @@ int main(int argc, char *argv[]) {
     else if (c == 'S')
       onlyScan = true;
       
+    else if (c == 'G')
+      genome = true;
+      
   }
   if (outDir.empty() || argc - o.ind < 1) {
+    fprintf(stderr, "Version %d.%d.%d\n", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH);
     fprintf(stderr, "Usage: %s [Options:] <in.fa>\n", argv[0]);
     fprintf(stderr, "Options:\n");
     fprintf(stderr,
@@ -246,16 +348,28 @@ int main(int argc, char *argv[]) {
                     "a HOR can contain [default = 50]\n");
     fprintf(stderr, "  -L INT     Specify the length cutoff that "
                     "the annotated sequence needs to meet [default = 5000]\n");
-    fprintf(stderr, "  -S INT     Specify the repeated sequences are scanned "
+    fprintf(stderr, "  -S BOOL    Specify the repeated sequences are scanned "
                     "out without annotation [default = false]\n");
+    fprintf(stderr, "  -G BOOL    Specify the tendem repeat of genome are annotated "
+                    "[default = false]\n");
     fprintf(stderr, "  example command: %s -o test test.fa\n", argv[0]);
     return 1;
   }
 
-  createDirectory(outDir);
-  depSeq2Monoblock(argv[o.ind], windowSize, repCutoff, hpc, k, threadNum,
-                   fpsCutoff, epsilon, outDir, monoTemFaFile, maxHORLen,
-                   lengthCutoff, onlyScan);
+  if (!genome) {
+    createDirectory(outDir);
+    depSeq2Monoblock(argv[o.ind], windowSize, repCutoff, hpc, k, threadNum,
+                     fpsCutoff, epsilon, outDir, monoTemFaFile, maxHORLen,
+                     lengthCutoff, onlyScan);
+  }
+
+  else {
+    createDirectory(outDir);
+    annoGenome(argv[o.ind], windowSize, repCutoff, hpc, k, threadNum, fpsCutoff,
+               epsilon, outDir, monoTemFaFile, maxHORLen, lengthCutoff,
+               onlyScan);
+    // return;
+  }
 
   return 0;
 }
