@@ -47,7 +47,7 @@ The specific parameters are as follows:
    | -M  | Specify the maximum number of monomers that a HOR can contain [default = 50] |
    | -L  | Specify the length cutoff that the annotated sequence needs to meet [default = 5000] |
    | -S  | Specify the repeated sequences are scanned out without annotation [default = false] |
-   | -G  | Specify the tendem repeat of genome are annotated [default = false] |
+   | -G  | Specify the tendem repeat of genome/assembly/read are annotated [default = false] |
 
 ## Example
 Analyze the structure of centromere without template information from a given centromere sequence:
