@@ -22,7 +22,7 @@ centroAnno runs Linux and requires gcc 9.3.0+.
 ```bash
 git clone https://github.com/junhaiqi/centroAnno.git
 cd centroAnno
-make  # C++11 required to compile
+make -j8  # C++11 required to compile
 ```
 Then, there will be a binary file called centroAnno.
 
