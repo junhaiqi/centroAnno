@@ -350,7 +350,7 @@ int main(int argc, char *argv[]) {
                     "the annotated sequence needs to meet [default = 5000]\n");
     fprintf(stderr, "  -S BOOL    Specify the repeated sequences are scanned "
                     "out without annotation [default = false]\n");
-    fprintf(stderr, "  -G BOOL    Specify the tendem repeat of genome are annotated "
+    fprintf(stderr, "  -G BOOL    Specify the tendem repeat of genome/assembly/read are annotated "
                     "[default = false]\n");
     fprintf(stderr, "  example command: %s -o test test.fa\n", argv[0]);
     return 1;
