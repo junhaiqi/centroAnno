@@ -164,8 +164,8 @@ void annoGenome(const char *fn, int &windowSize, const float &repCutoff,
       std::cout << "***************************" << "Region " << i << ":Pos:" << repRegions[i].first << ":" << repRegions[i].second << "***************************\n";
       std::string thisSeq = seq.substr( repRegions[i].first, repRegions[i].second - repRegions[i].first );
       std::string this_name = name + "_" + std::to_string(repRegions[i].first) + "_" + std::to_string(repRegions[i].second);
-      windowSize = thisSeq.length() > windowSize ? windowSize : thisSeq.length();
-      SEQ mySeq(thisSeq.substr(0, windowSize),
+      windowSize = thisSeq.length() / 5 > windowSize ? windowSize : thisSeq.length();
+      SEQ mySeq(thisSeq.substr(thisSeq.length() / 5, windowSize),
                 this_name); // Extract seuence to infer monomer template.
 
       std::vector<std::string> monoSeqs;
