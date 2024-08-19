@@ -257,7 +257,7 @@ int main(int argc, char *argv[]) {
   char *monoTemFaFile = "";
   int maxHORLen = 50;
   int lengthCutoff = 5000;
-  int maxRegionLength = 100000;
+  int maxRegionLength = 1000000;
   int minRegionLength = 100;
   float genomeCutOff = 0.8;
   bool onlyScan = false;
@@ -379,7 +379,7 @@ int main(int argc, char *argv[]) {
     fprintf(stderr, "  -L INT     Specify the length cutoff that "
                     "the annotated sequence needs to meet [default = 5000]\n");
     fprintf(stderr, "  -A INT     Specify the maxinum length cutoff that "
-                    "the annotated region in the genome needs to meet for speed [default = 100000]\n");
+                    "the annotated region in the genome needs to meet for speed [default = 1000000]\n");
     fprintf(stderr, "  -N INT     Specify the mininum length cutoff that "
                     "the annotated region in the genome needs to meet for accuracy [default = 100]\n");
     fprintf(stderr, "  -F FLOAT   Specify the indentity cutoff for genome annotation "
