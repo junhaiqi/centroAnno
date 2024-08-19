@@ -46,6 +46,9 @@ The specific parameters are as follows:
    | -t  | Specify the number of threads for template inference [default = 8] |
    | -M  | Specify the maximum number of monomers that a HOR can contain [default = 50] |
    | -L  | Specify the length cutoff that the annotated sequence needs to meet [default = 5000] |
+   | -A  | Specify the maxinum length cutoff that the annotated region in the genome needs to meet for speed [default = 100000] |
+   | -N  | Specify the mininum length cutoff that the annotated region in the genome needs to meet for accuracy [default = 100] |
+   | -F  | Specify the indentity cutoff for genome annotation [default = 0.8] |
    | -S  | Specify the repeated sequences are scanned out without annotation [default = false] |
    | -G  | Specify the tendem repeat of genome/assembly/read are annotated [default = false] |
 
