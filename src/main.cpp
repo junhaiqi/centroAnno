@@ -1,4 +1,3 @@
-#include "genome.h"
 #include "hor.h"
 #include "ketopt.h"
 #include "kseq.h"
@@ -8,6 +7,7 @@
 #include "moutput.h"
 #include "sequenceUtils.h"
 #include "version_centroAnno.h"
+#include "genome.h"
 
 KSEQ_INIT(gzFile, gzread)
 
@@ -85,7 +85,7 @@ static void depSeq2Monoblock(const char *fn, int &windowSize,
       monoTempInference(mySeq, k, fpsCutoff, 4, monoSeqs, bestMonos, hpc,
                         repCutoff);
       if (bestMonos.empty()) {
-        std::cout << name << " may not be a reapeating sequence.\n";
+        std::cout << name << " may not be a reapeating sequence. (empty inferred templates)\n";
         continue;
       }
     }
@@ -117,14 +117,15 @@ static void depSeq2Monoblock(const char *fn, int &windowSize,
                      threadNum, hpc, k, fpsCutoff, repCutoff, demResFileName,
                      monoTemsFileName);
 
-    std::vector<HORINFO> horDecompBlockRes;
-    std::vector<std::string> cleanedHORs;    // format is name, like 2_1_3...
-    std::vector<std::string> cleanedHORSeqs; // format is base sequence
-    inferHORs(newDemcompBlockRes, refinedBestMonomerTems, longSequence.seq,
-              horDecompBlockRes, cleanedHORs, cleanedHORSeqs, maxHORLen);
-
-    writeHORDecomposeRes(horDecompBlockRes, horDemResFileName);
-    writeInferedHORs(cleanedHORs, cleanedHORSeqs, horFileName);
+    if (newDemcompBlockRes.size() > 10) {
+      std::vector<HORINFO> horDecompBlockRes;
+      std::vector<std::string> cleanedHORs;    // format is name, like 2_1_3...
+      std::vector<std::string> cleanedHORSeqs; // format is base sequence
+      inferHORs(newDemcompBlockRes, refinedBestMonomerTems, longSequence.seq,
+                horDecompBlockRes, cleanedHORs, cleanedHORSeqs, maxHORLen);
+      writeHORDecomposeRes(horDecompBlockRes, horDemResFileName);
+      writeInferedHORs(cleanedHORs, cleanedHORSeqs, horFileName);
+    }
   }
   kseq_destroy(ks);
   gzclose(fp);
@@ -135,7 +136,7 @@ void annoGenome(const char *fn, int &windowSize, const float &repCutoff,
                 const float &fpsCutoff, const float &epsilon,
                 const std::string &outDir, const char *monoTemFa = "",
                 const int maxHORLen = 50, const int lengthCutoff = 5000,
-                const bool onlyScan = false) {
+                const bool onlyScan = false, const int maxRegionLength = 500000, const int minRegionLength = 100, const float genomeCutoff = 0.8) {
   gzFile fp;
   kseq_t *ks;
   if ((fp = gzopen(fn, "r")) == 0)
@@ -155,18 +156,29 @@ void annoGenome(const char *fn, int &windowSize, const float &repCutoff,
     SEQ sequence(seq, name);
     std::cout << "Detecting tandem repeat regions in the genome...\n";
     repeatRegionInference(sequence, k, repCutoff, lengthCutoff, hpc,
-                          repRegions);
+                          repRegions, maxRegionLength);
     std::cout << "Detecting end.\n";
     std::cout << "There are " << repRegions.size() << " regions.\n";
     std::cout << "\n";
 
+    const std::string demResFileName =
+        outDir + "/" + name + "_decomposedResult.csv";
+    const std::string horDemResFileName =
+        outDir + "/" + name + "_horDecomposedResult.csv";
+    const std::string monoTemsFileName =
+        outDir + "/" + name + "_monomerTemplates.fa";
+    const std::string horFileName = outDir + "/" + name + "_HORs.fa";
+
+    const int tempWindowSize = windowSize;
     for (size_t i = 0; i < repRegions.size(); ++i) {
       std::cout << "***************************" << "Region " << i << ":Pos:" << repRegions[i].first << ":" << repRegions[i].second << "***************************\n";
       std::string thisSeq = seq.substr( repRegions[i].first, repRegions[i].second - repRegions[i].first );
-      std::string this_name = name + "_" + std::to_string(repRegions[i].first) + "_" + std::to_string(repRegions[i].second);
-      windowSize = thisSeq.length() / 5 > windowSize ? windowSize : thisSeq.length();
-      SEQ mySeq(thisSeq.substr(thisSeq.length() / 5, windowSize),
-                this_name); // Extract seuence to infer monomer template.
+      std::cout << "Repeat Region Length:" << thisSeq.length() << "\n";
+      const SEQ longSequence(thisSeq, name);
+      windowSize = thisSeq.length() > tempWindowSize ? tempWindowSize : thisSeq.length();
+      // std::cout << "Window Length For :" << windowSize << "\n";
+      SEQ mySeq(thisSeq.substr(0, windowSize),
+                name); // Extract seuence to infer monomer template.
 
       std::vector<std::string> monoSeqs;
       std::vector<SEQ> bestMonos;
@@ -175,7 +187,7 @@ void annoGenome(const char *fn, int &windowSize, const float &repCutoff,
         monoTempInference(mySeq, k, fpsCutoff, 4, monoSeqs, bestMonos, hpc,
                           repCutoff);
         if (bestMonos.empty()) {
-          std::cout << name << " may not be a reapeating sequence.\n";
+          std::cout << name << " may not be a reapeating sequence. (empty inferred templates)\n";
           continue;
         }
       }
@@ -193,28 +205,34 @@ void annoGenome(const char *fn, int &windowSize, const float &repCutoff,
       vector<std::string> refinedBestMonomerTems; // Final monomer templates.
       sampleClustering(mySeq, demcompBlockRes, clusterLabels,
                        refinedBestMonomerTems, threadNum, epsilon);
-
-      const SEQ longSequence(thisSeq, this_name);
+      
       vector<MonomerAlignment> newDemcompBlockRes;
-      const std::string demResFileName =
-          outDir + "/" + this_name + "_decomposedResult.csv";
-      const std::string horDemResFileName =
-          outDir + "/" + this_name + "_horDecomposedResult.csv";
-      const std::string monoTemsFileName =
-          outDir + "/" + this_name + "_monomerTemplates.fa";
-      const std::string horFileName = outDir + "/" + this_name + "_HORs.fa";
-      refineDemcompose(longSequence, refinedBestMonomerTems, newDemcompBlockRes,
-                       threadNum, hpc, k, fpsCutoff, repCutoff, demResFileName,
-                       monoTemsFileName);
+      refineDemcomposeGenome(longSequence, refinedBestMonomerTems, newDemcompBlockRes,
+                       threadNum, hpc, k, fpsCutoff, repCutoff);
 
-      std::vector<HORINFO> horDecompBlockRes;
-      std::vector<std::string> cleanedHORs;    // format is name, like 2_1_3...
-      std::vector<std::string> cleanedHORSeqs; // format is base sequence
-      inferHORs(newDemcompBlockRes, refinedBestMonomerTems, longSequence.seq,
-                horDecompBlockRes, cleanedHORs, cleanedHORSeqs, maxHORLen);
+      std::vector<region> goodRegions;
+      findGoodDemcomRegion(newDemcompBlockRes, goodRegions, minRegionLength, genomeCutoff);
+      writeInferedMonosForGenome(refinedBestMonomerTems, monoTemsFileName, repRegions[i].first, repRegions[i].second, name);
 
-      writeHORDecomposeRes(horDecompBlockRes, horDemResFileName);
-      writeInferedHORs(cleanedHORs, cleanedHORSeqs, horFileName);
+      for (size_t j = 0; j < goodRegions.size(); ++j) {
+        const int regionSize = goodRegions[j].end - goodRegions[j].start;
+        std::vector<MonomerAlignment> goodBlockRegion( newDemcompBlockRes.begin() + goodRegions[j].blockStartID, 
+                                      newDemcompBlockRes.begin() + goodRegions[j].blockEndID);
+        
+
+        writeDecomposeResForGenome(goodBlockRegion, demResFileName, repRegions[i].first, repRegions[i].second);
+
+        if (regionSize > lengthCutoff && goodBlockRegion.size() > 10) {
+          std::vector<HORINFO> horDecompBlockRes;
+          std::vector<std::string> cleanedHORs;    // format is name, like 2_1_3...
+          std::vector<std::string> cleanedHORSeqs; // format is base sequence
+          inferHORs(goodBlockRegion, refinedBestMonomerTems, longSequence.seq,
+                    horDecompBlockRes, cleanedHORs, cleanedHORSeqs, maxHORLen);
+
+          writeHORDecomposeResForGenome(horDecompBlockRes, horDemResFileName, repRegions[i].first, repRegions[i].second);
+          writeInferedHORsForGenome(cleanedHORs, cleanedHORSeqs, horFileName, repRegions[i].first, repRegions[i].second, name);
+        }
+      }
 
       std::cout << "***************************" << "Region " << i << ":Pos:" << repRegions[i].first << ":" << repRegions[i].second << "***************************\n";
       std::cout << "\n";
@@ -239,9 +257,12 @@ int main(int argc, char *argv[]) {
   char *monoTemFaFile = "";
   int maxHORLen = 50;
   int lengthCutoff = 5000;
+  int maxRegionLength = 100000;
+  int minRegionLength = 100;
+  float genomeCutOff = 0.8;
   bool onlyScan = false;
   bool genome = false;
-  while ((c = ketopt(&o, argc, argv, 1, "o:k:f:r:w:c:e:t:m:M:L:S:G:", 0)) >= 0) {
+  while ((c = ketopt(&o, argc, argv, 1, "o:k:f:r:w:c:e:t:m:M:L:S:G:A:N:F:", 0)) >= 0) {
     if (c == 'o') {
       if (o.arg == 0) {
         fprintf(stderr, "Error: -o requires an argument.\n");
@@ -322,6 +343,15 @@ int main(int argc, char *argv[]) {
       
     else if (c == 'G')
       genome = true;
+
+    else if (c == 'A')
+      maxRegionLength = atoi(o.arg);
+
+    else if (c == 'N')
+      minRegionLength = atoi(o.arg);
+
+    else if (c == 'F')
+      genomeCutOff = atof(o.arg);
       
   }
   if (outDir.empty() || argc - o.ind < 1) {
@@ -348,9 +378,15 @@ int main(int argc, char *argv[]) {
                     "a HOR can contain [default = 50]\n");
     fprintf(stderr, "  -L INT     Specify the length cutoff that "
                     "the annotated sequence needs to meet [default = 5000]\n");
+    fprintf(stderr, "  -A INT     Specify the maxinum length cutoff that "
+                    "the annotated region in the genome needs to meet for speed [default = 100000]\n");
+    fprintf(stderr, "  -N INT     Specify the mininum length cutoff that "
+                    "the annotated region in the genome needs to meet for accuracy [default = 100]\n");
+    fprintf(stderr, "  -F FLOAT   Specify the indentity cutoff for genome annotation "
+                    "[default = 0.8]\n");
     fprintf(stderr, "  -S BOOL    Specify the repeated sequences are scanned "
                     "out without annotation [default = false]\n");
-    fprintf(stderr, "  -G BOOL    Specify the tendem repeat of genome/assembly/read are annotated "
+    fprintf(stderr, "  -G BOOL    Specify the tendem repeat of genome are annotated "
                     "[default = false]\n");
     fprintf(stderr, "  example command: %s -o test test.fa\n", argv[0]);
     return 1;
@@ -367,7 +403,7 @@ int main(int argc, char *argv[]) {
     createDirectory(outDir);
     annoGenome(argv[o.ind], windowSize, repCutoff, hpc, k, threadNum, fpsCutoff,
                epsilon, outDir, monoTemFaFile, maxHORLen, lengthCutoff,
-               onlyScan);
+               onlyScan, maxRegionLength, minRegionLength, genomeCutOff);
     // return;
   }
 

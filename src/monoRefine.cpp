@@ -320,13 +320,16 @@ void updateIdentityByEditDist(const SEQ &longSequence,
       const int idx = std::stoi(m.monomer_name);
       thisMonomer = newMonoTems[idx];
     }
-    std::string seqBlock =
-        longSequence.seq.substr(m.start_pos, m.end_pos - m.start_pos + 1);
-    int edist = 0;
-    size_t l = std::max(seqBlock.size(), thisMonomer.size());
-    calEditDist(seqBlock, thisMonomer, edist);
-    float identity = 1 - (static_cast<float>(edist) / l);
-    m.identity = identity;
+    if (m.start_pos < longSequence.seq.size() && m.start_pos + m.end_pos - m.start_pos + 1 < longSequence.seq.size()) {
+      std::string seqBlock =
+      longSequence.seq.substr(m.start_pos, m.end_pos - m.start_pos + 1);
+      int edist = 0;
+      size_t l = std::max(seqBlock.size(), thisMonomer.size());
+      calEditDist(seqBlock, thisMonomer, edist);
+      float identity = 1 - (static_cast<float>(edist) / l);
+      m.identity = identity;
+    }
+    else  m.identity = 0;
   }
 }
 
@@ -342,8 +345,10 @@ void checkBadBlockNums(const SEQ &sequence,
     const float esIdentity =
         m.identity / static_cast<float>(m.end_pos - m.start_pos + 1);
     if (esIdentity < 0.90) { // 0.92
-      badBlocks.push_back(
-          sequence.seq.substr(m.start_pos, m.end_pos - m.start_pos + 1));
+      if (m.start_pos < sequence.seq.size() && m.start_pos + m.end_pos - m.start_pos + 1 < sequence.seq.size()) {
+        badBlocks.push_back(
+        sequence.seq.substr(m.start_pos, m.end_pos - m.start_pos + 1));
+      }
     } // it indicates a bad block might be caused by insufficient templates.
   }
 
