@@ -80,7 +80,7 @@ If the above example runs successfully, the folder 'test' will be the following 
    | *_monomerTemplates.fa  | Load all monomers inferred by centroAnno |
    | *_HORs.fa  | Load all HORs inferred by centroAnno |
 
-The * indicates the name of each sequence in the input fasta/fastq.gz file. In particular, when the "-G" parameter is used, * will have a format similar to the following: sequence_78605000_79200000. Among them, "sequence" indicates the name of the sequence, and 78605000 and 79200000 indicate the position of the annotation region in the sequence.
+The * indicates the name of each sequence in the input fasta/fastq.gz file.
 
 ## Acknowledgments
 None.
