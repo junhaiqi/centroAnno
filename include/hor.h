@@ -52,6 +52,27 @@ inline void writeHORDecomposeRes(const std::vector<HORINFO> &horDecomoseRes,
   }
 }
 
+inline void writeHORDecomposeResForGenome(const std::vector<HORINFO> &horDecomoseRes,
+                                 const std::string &filename, const int &startPos, const int &endPos) {
+
+  std::ofstream outFile(filename, std::ios::app);
+  if (!outFile.is_open()) {
+    std::cerr << "Error opening file: " << filename << std::endl;
+    return;
+  }
+  // outFile << "Sequence name\tMononer name\tStart position\tEnd position\tEstimated "
+  //            "Identity\tLength\tConfidence"
+          // << "\n";
+  for (const auto &a : horDecomoseRes) {
+    const size_t len = a.end_pos - a.start_pos + 1;
+    std::string s =
+        a.read_name + "," + "Pos:" + std::to_string(startPos) + ":" + std::to_string(endPos) + ":" + a.monomer_name+ "," + std::to_string(a.start_pos + startPos) +
+        "," + std::to_string(a.end_pos + startPos) + "," + std::to_string(a.identity) +
+        "," + std::to_string(len) + "," + a.confidenceLevel;
+    outFile << s << "\n";
+  }
+}
+
 void inferHORs(
     const vector<MonomerAlignment> &monomerDecompBlockRes,
     const std::vector<std::string> &monos, const std::string &sequence,

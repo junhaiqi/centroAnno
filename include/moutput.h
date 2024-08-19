@@ -34,6 +34,28 @@ inline void writeDecomposeRes(const std::vector<MonomerAlignment> &decomoseRes,
 //   outFile.close();
 }
 
+inline void writeDecomposeResForGenome(const std::vector<MonomerAlignment> &decomoseRes,
+                              const std::string &filename, const int &startPos, const int &endPos) {
+
+  std::ofstream outFile(filename, std::ios::app);
+  if (!outFile.is_open()) {
+    std::cerr << "Error opening file: " << filename << std::endl;
+    return;
+  }
+  // outFile << "sequence name\tmononer name\tstart position,end position\testimated "
+  //            "identity\tlength"
+  //         << "\n";
+  for (const auto &a : decomoseRes) {
+    const size_t len = a.end_pos - a.start_pos + 1;
+    std::string s = a.read_name + "," + "Pos:" + std::to_string(startPos) + ":" + std::to_string(endPos) + "_" + a.monomer_name + "," +
+                    std::to_string(a.start_pos + startPos) + "," +
+                    std::to_string(a.end_pos + startPos) + "," +
+                    std::to_string(a.identity) + "," + std::to_string(len);
+    outFile << s << "\n";
+  }
+//   outFile.close();
+}
+
 inline void writeInferedMonos(const std::vector<std::string> &inferedMonos,
                               const std::string &filename) {
 
@@ -45,6 +67,23 @@ inline void writeInferedMonos(const std::vector<std::string> &inferedMonos,
 
   for (size_t i = 0; i < inferedMonos.size(); i++) {
     std::string monoID = '>' + std::to_string(i);
+    outFile << monoID << "\n";
+    outFile << inferedMonos[i] << "\n";
+  }
+  outFile.close();
+}
+
+inline void writeInferedMonosForGenome(const std::vector<std::string> &inferedMonos,
+                              const std::string &filename, const int &startPos, const int &endPos, const std::string &seqName) {
+
+  std::ofstream outFile(filename, std::ios::app);
+  if (!outFile.is_open()) {
+    std::cerr << "Error opening file: " << filename << std::endl;
+    return;
+  }
+
+  for (size_t i = 0; i < inferedMonos.size(); i++) {
+    std::string monoID = '>' + seqName + ':' + std::to_string(startPos) + ':' + std::to_string(endPos) + '_' + std::to_string(i);
     outFile << monoID << "\n";
     outFile << inferedMonos[i] << "\n";
   }
@@ -63,6 +102,24 @@ inline void writeInferedHORs(const std::vector<std::string> &horNames,
 
   for (size_t i = 0; i < horNames.size(); i++) {
     std::string monoID = '>' + horNames[i];
+    outFile << monoID << "\n";
+    outFile << horSeqs[i] << "\n";
+  }
+  outFile.close();
+}
+
+inline void writeInferedHORsForGenome(const std::vector<std::string> &horNames,
+                             const std::vector<std::string> &horSeqs,
+                             const std::string &filename, const int &startPos, const int &endPos, const std::string &seqName) {
+
+  std::ofstream outFile(filename, std::ios::app);
+  if (!outFile.is_open()) {
+    std::cerr << "Error opening file: " << filename << std::endl;
+    return;
+  }
+
+  for (size_t i = 0; i < horNames.size(); i++) {
+    std::string monoID = '>' + seqName + ':' + std::to_string(startPos) + ':' + std::to_string(endPos) + ':' + horNames[i];
     outFile << monoID << "\n";
     outFile << horSeqs[i] << "\n";
   }
