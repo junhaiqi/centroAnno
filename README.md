@@ -89,4 +89,4 @@ None.
 MIT License.
 
 ## Cite
-None.
+Junhai Qi, Junchi Ma, Zheng Han, Renmin Han, Ting Yu, Guojun Li. De novo annotation of centromere with centroAnno. bioRxiv 2025.02.19.639205; doi: https://doi.org/10.1101/2025.02.19.639205
