@@ -80,7 +80,7 @@ If the above example runs successfully, the folder 'test' will be the following 
    | *_monomerTemplates.fa  | Load all monomers inferred by centroAnno |
    | *_HORs.fa  | Load all HORs inferred by centroAnno |
 
-The * indicates the name of each sequence in the input fasta/fastq.gz file.
+The * indicates the name of each sequence in the input fasta/fastq.gz file. When the mononer name is in the form of 12', it means the reverse complement of monomer 12.
 
 ## Acknowledgments
 None.
