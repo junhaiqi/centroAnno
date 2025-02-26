@@ -26,6 +26,19 @@ make -j8  # C++11 required to compile
 ```
 Then, there will be a binary file called centroAnno.
 
+If necessary, you can recompile to get libspoa.a:
+
+```bash
+git clone --recursive https://github.com/rvaser/spoa.git
+cd spoa
+mkdir build
+cd build
+cmake -DCMAKE_CXX_FLAGS="-march=x86-64" ..
+make -j8
+cp lib/libspoa.a ../centroAnno/lib/
+```
+
+
 ## Usage
 
 Basic command:
