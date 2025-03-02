@@ -65,6 +65,47 @@ The specific parameters are as follows:
    | -S  | Specify the repeated sequences are scanned out without annotation [default = false] |
    | -G  | Specify the tendem repeat of genome/assembly/read are annotated [default = false] |
 
+In fact, centroAnno's multi-threaded computing is mainly used for sequence decomposition problems (see https://academic.oup.com/bioinformatics/article/36/Supplement_1/i93/5870498). Sequence decomposition requires a lot of memory and is linearly related to the number of threads, the number of threads you set depends on the available memory.
+
+When we analyzed human CHM13 chromosome 1, we used the following command:
+
+```bash
+./centroAnno human_chr/chr1.fasta -o CHM13_centroAnno_out/chr1 -k 10 -r 0.3 -L 10000 -G true -A 1000000
+```
+
+The log is:
+
+```bash
+Command being timed: "./centroAnno human_chr/chr2.fasta -o CHM13_centroAnno_out/chr2 -k 10 -r 0.3 -L 10000 -G true -A 1000000"
+        Command being timed: "./centroAnno human_chr/chr1.fasta -o CHM13_centroAnno_out/chr1 -k 10 -r 0.3 -L 10000 -G true -A 1000000"
+        User time (seconds): 6015.51
+        System time (seconds): 206.47
+        Percent of CPU this job got: 153%
+        Elapsed (wall clock) time (h:mm:ss or m:ss): 1:07:46
+        Average shared text size (kbytes): 0
+        Average unshared data size (kbytes): 0
+        Average stack size (kbytes): 0
+        Average total size (kbytes): 0
+        Maximum resident set size (kbytes): 4157412
+        Average resident set size (kbytes): 0
+        Major (requiring I/O) page faults: 0
+        Minor (reclaiming a frame) page faults: 111704253
+        Voluntary context switches: 6051
+        Involuntary context switches: 697541
+        Swaps: 0
+        File system inputs: 0
+        File system outputs: 47856
+        Socket messages sent: 0
+        Socket messages received: 0
+        Signals delivered: 0
+        Page size (bytes): 4096
+        Exit status: 0
+```
+
+This implies that using the default thread values, annotation of chromosome 1 can be completed in ~1 hour, with a peak memory usage of ~3.9GB.
+
+In fact, we have recently proposed a new low-memory algorithm for solving sequence decomposition problems, which is currently being tested, which will greatly reduce memory requirements for better parallel analysis. Welcome your follow-up attention.
+
 ## Example
 Analyze the structure of centromere without template information from a given centromere sequence:
 ```bash
