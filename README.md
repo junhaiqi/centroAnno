@@ -17,7 +17,7 @@ cd centroAnno make -j8  # C++11 required to compile
 # Analyze the tendem repeats/HORs a given **genome/assembly**:
 ./centroAnno $your_genome.fa -o $your_output -G true
 
-#An example command for analyzing the human chromosome 1:
+# An example command for analyzing the human chromosome 1:
 ./centroAnno $your_chr1.fasta -o $your_chr1_out -k 10 -r 0.3 -L 10000 -G true -A 1000000
 ```
 
