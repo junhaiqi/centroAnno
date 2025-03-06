@@ -3,7 +3,7 @@
 ```bash
 # Install centroAnno
 git clone https://github.com/junhaiqi/centroAnno.git
-cd centroAnno make -j8  # C++11 required to compile
+cd centroAnno && make -j8  # C++11 required to compile
 
 # Run on test data
 ./centroAnno example/cen21.fa -o test
