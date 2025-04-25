@@ -8,7 +8,7 @@ cd centroAnno && make -j8  # C++11 required to compile
 # Run on test data
 ./centroAnno example/cen21.fa -o test
 
-# Analyze the tandem repeats/HORs from a given **genome/assembly/general sequence**:
+# Analyze the tandem repeats/HORs from a given **chromosome/assembly/general sequence** (No prior information required):
 ./centroAnno $your_genome.fa -o $your_output -G true
 
 # An example command for analyzing the human chromosome 1:
