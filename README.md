@@ -13,13 +13,13 @@ cd centroAnno && make -j8  # C++11 required to compile
 
 # An example command for analyzing the human chromosome 1:
 ./centroAnno $your_chr1.fasta -o $your_chr1_out -k 10 -r 0.3 -L 10000 -G true -A 1000000
-```
 
 # Analyze the structure of centromere without template information from a given **centromeric alpha-satellite sequence/centromeric alpha-satellite assembly**:
 ./centroAnno $your_centromere.fa -o $your_output
 
 # Analyze the structure of centromere with template information from a given **centromeric alpha-satellite sequence/centromeric alpha-satellite assembly**:
 ./centroAnno $your_centromere.fa -m $your_templates.fa -o $your_output
+```
 
 
 ## Overview of centroAnno
