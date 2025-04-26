@@ -72,24 +72,29 @@ Basic command:
 ./centroAnno [Options:] <in.fa>
 ```
 The specific parameters are as follows:
-   | Parameters   | Description |
-   |  :----:  | :----:  |
-   | -o  | Specify the output folder [required parameters] |
-   | -m  | Specify the monomer template file with fasta type [default = None] |
-   | -k  | Specify the k-mer size [default = 13] |
-   | -f  | Specify the fps cutoff [default = 0.6] |
-   | -r  | Specify the repeat redio cutoff [default = 0.2] |
-   | -w  | Specify the window size for infering templates [default = 500000] |
-   | -c  | Specify closing the homopolymer compression [default = false] |
-   | -e  | Specify the indentity cutoff for DBSCAN [default = 0.95] |
-   | -t  | Specify the number of threads for template inference [default = 8] |
-   | -M  | Specify the maximum number of monomers that a HOR can contain [default = 50] |
-   | -L  | Specify the length cutoff that the annotated sequence needs to meet [default = 5000] |
-   | -A  | Specify the maxinum length cutoff that the annotated region in the genome needs to meet for speed [default = 100000] |
-   | -N  | Specify the mininum length cutoff that the annotated region in the genome needs to meet for accuracy [default = 100] |
-   | -F  | Specify the indentity cutoff for genome annotation [default = 0.8] |
-   | -S  | Specify the repeated sequences are scanned out without annotation [default = false] |
-   | -G  | Specify the tendem repeat of genome/assembly/read are annotated [default = false] |
+```bash
+Version 1.0.2
+Usage: ./centroAnno [Options:] <in.fa>
+Options:
+  -o STR     Specify the output folder [required parameters]
+  -m STR     Specify the monomer template file with fasta type [default = None]
+  -k INT     Specify the k-mer size [default = 11]
+  -f FLOAT   Specify the fps cutoff [default = 0.6]
+  -r FLOAT   Specify the repeat redio cutoff [default = 0.2]
+  -w INT     Specify the window size for infering templates [default = 500000]
+  -c BOOL    Specify the homopolymer compression (1: yes, 0: no) [default = 1]
+  -e FLOAT   Specify the indentity cutoff for DBSCAN [default = 0.95]
+  -x STR   Specify the annotated data type (anno-sat-asm: annotate centromeric alpha-satellite sequence (HiCAT/HORmon-like input), anno-asm: annotate chromosome/assembly, or anno-read: annotate sequencing reads)
+[default is anno-sat-asm]
+  -t INT     Specify the number of threads for template inference [default = 8]
+  -M INT     Specify the maximum number of monomers that a HOR can contain [default = 50]
+  -L INT     Specify the length cutoff that the annotated sequence needs to meet [default = 5000]
+  -A INT     Specify the maxinum length cutoff that the annotated region in the genome needs to meet for speed [default = 1000000]
+  -N INT     Specify the mininum length cutoff that the annotated region in the genome needs to meet for accuracy [default = 100]
+  -F FLOAT   Specify the indentity cutoff for genome annotation [default = 0.8]
+  -S BOOL    Specify the repeated sequences are scanned out without annotation (1: yes, 0: no) [default = 0]
+  example command: ./centroAnno -o test test.fa
+```
 
 In fact, centroAnno's multi-threaded computing is mainly used for sequence decomposition problems (see https://academic.oup.com/bioinformatics/article/36/Supplement_1/i93/5870498). Sequence decomposition requires a lot of memory and is linearly related to the number of threads, the number of threads you set depends on the available memory.
 
