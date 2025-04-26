@@ -69,7 +69,7 @@ static void depSeq2Monoblock(const char *fn, int &windowSize,
   while (kseq_read(ks) >= 0) {
     std::string seq = ks->seq.s;
     std::string name = ks->name.s;
-    std::cout << "Sequence Length: " << seq.length() << "\n";
+    std::cout << name << " Length: " << seq.length() << "\n";
     if (seq.length() < lengthCutoff) {
       std::cout << "The length of " << name << " is less than " << lengthCutoff << " and is not suitable for repeat annotation." << std::endl;
       continue;
@@ -146,7 +146,7 @@ void annoGenome(const char *fn, int &windowSize, const float &repCutoff,
   while (kseq_read(ks) >= 0) {
     std::string seq = ks->seq.s;
     std::string name = ks->name.s;
-    std::cout << "Sequence Length: " << seq.length() << "\n";
+    std::cout << name << " Length: " << seq.length() << "\n";
     if (seq.length() < lengthCutoff) {
       std::cout << "The length of " << name << " is less than " << lengthCutoff << " and is not suitable for repeat annotation." << std::endl;
       continue;
@@ -154,7 +154,7 @@ void annoGenome(const char *fn, int &windowSize, const float &repCutoff,
 
     std::vector<std::pair<int, int>> repRegions;
     SEQ sequence(seq, name);
-    std::cout << "Detecting tandem repeat regions in the genome...\n";
+    std::cout << "Detecting tandem repeat regions in the " << name << "...\n";
     repeatRegionInference(sequence, k, repCutoff, lengthCutoff, hpc,
                           repRegions, maxRegionLength);
     std::cout << "Detecting end.\n";
@@ -247,11 +247,11 @@ int main(int argc, char *argv[]) {
   ketopt_t o = KETOPT_INIT;
   int32_t c;
   std::string outDir;
-  int k = 13;
+  int k = 11;
   float fpsCutoff = 0.6;
   float repCutoff = 0.2;
   int windowSize = 500000;
-  bool hpc = true;
+  bool hpc = 1;
   int threadNum = 8;
   float epsilon = 0.95;
   char *monoTemFaFile = "";
@@ -260,9 +260,11 @@ int main(int argc, char *argv[]) {
   int maxRegionLength = 1000000;
   int minRegionLength = 100;
   float genomeCutOff = 0.8;
-  bool onlyScan = false;
-  bool genome = false;
-  while ((c = ketopt(&o, argc, argv, 1, "o:k:f:r:w:c:e:t:m:M:L:S:G:A:N:F:", 0)) >= 0) {
+  bool onlyScan = 0;
+  // bool genome = 0;
+  std::string annoMode = "anno-sat-asm";
+  // std::vector<std::string> annoModeLst = {"anno-sat-asm", "anno-read", "anno-asm"};
+  while ((c = ketopt(&o, argc, argv, 1, "o:k:f:r:w:c:e:t:m:x:M:L:S:G:A:N:F:", 0)) >= 0) {
     if (c == 'o') {
       if (o.arg == 0) {
         fprintf(stderr, "Error: -o requires an argument.\n");
@@ -317,7 +319,17 @@ int main(int argc, char *argv[]) {
     }
 
     else if (c == 'c')
-      hpc = false;
+      hpc = atoi(o.arg);
+
+    else if (c == 'x')
+    {
+      annoMode = o.arg;
+      if(annoMode != "anno-sat-asm" && annoMode != "anno-asm" && annoMode != "anno-read")
+      {
+        std::cerr << "-x requires an argument is anno-sat-asm, anno-asm, or anno-read\n";
+        return 1;
+      }
+    }
 
     else if (c == 't')
       threadNum = atoi(o.arg);
@@ -331,18 +343,18 @@ int main(int argc, char *argv[]) {
     else if (c == 'L') {
       lengthCutoff = atoi(o.arg);
     
-      if (lengthCutoff < 1000) {
+      if (lengthCutoff < 100) {
         fprintf(stderr, "Warning: the value of -L is recommended to be greater "
-                        "than 1000.\n");
+                        "than 100.\n");
         return 1;
       }
     }
 
     else if (c == 'S')
-      onlyScan = true;
+      onlyScan = atoi(o.arg);
       
-    else if (c == 'G')
-      genome = true;
+    // else if (c == 'G')
+    //   genome = atoi(o.arg);
 
     else if (c == 'A')
       maxRegionLength = atoi(o.arg);
@@ -362,16 +374,18 @@ int main(int argc, char *argv[]) {
             "  -o STR     Specify the output folder [required parameters]\n");
     fprintf(stderr, "  -m STR     Specify the monomer template file with fasta "
                     "type [default = None]\n");
-    fprintf(stderr, "  -k INT     Specify the k-mer size [default = 13]\n");
+    fprintf(stderr, "  -k INT     Specify the k-mer size [default = 11]\n");
     fprintf(stderr, "  -f FLOAT   Specify the fps cutoff [default = 0.6]\n");
     fprintf(stderr,
             "  -r FLOAT   Specify the repeat redio cutoff [default = 0.2]\n");
     fprintf(stderr, "  -w INT     Specify the window size for infering "
                     "templates [default = 500000]\n");
-    fprintf(stderr, "  -c BOOL    Specify closing the homopolymer compression "
-                    "[default = false]\n");
+    fprintf(stderr, "  -c BOOL    Specify the homopolymer compression (1: yes, 0: no) "
+                    "[default = 1]\n");
     fprintf(stderr, "  -e FLOAT   Specify the indentity cutoff for DBSCAN "
                     "[default = 0.95]\n");
+    fprintf(stderr, "  -x STR   Specify the annotated data type (anno-sat-asm: annotate centromeric alpha-satellite sequence (HiCAT/HORmon-like input), anno-asm: annotate chromosome/assembly, or anno-read: annotate sequencing reads)\n"
+      "[default is anno-sat-asm]\n");
     fprintf(stderr, "  -t INT     Specify the number of threads for template "
                     "inference [default = 8]\n");
     fprintf(stderr, "  -M INT     Specify the maximum number of monomers that "
@@ -385,26 +399,37 @@ int main(int argc, char *argv[]) {
     fprintf(stderr, "  -F FLOAT   Specify the indentity cutoff for genome annotation "
                     "[default = 0.8]\n");
     fprintf(stderr, "  -S BOOL    Specify the repeated sequences are scanned "
-                    "out without annotation [default = false]\n");
-    fprintf(stderr, "  -G BOOL    Specify the tendem repeat of genome are annotated "
-                    "[default = false]\n");
+                    "out without annotation (1: yes, 0: no) [default = 0]\n");
+    // fprintf(stderr, "  -G BOOL    Specify the tendem repeat of chromosome/assembly are annotated (1: yes, 0: no) "
+    //                 "[default = 0]\n");
     fprintf(stderr, "  example command: %s -o test test.fa\n", argv[0]);
     return 1;
   }
 
-  if (!genome) {
+  if (annoMode == "anno-sat-asm")
+  {
     createDirectory(outDir);
     depSeq2Monoblock(argv[o.ind], windowSize, repCutoff, hpc, k, threadNum,
                      fpsCutoff, epsilon, outDir, monoTemFaFile, maxHORLen,
                      lengthCutoff, onlyScan);
   }
 
-  else {
+  else if (annoMode == "anno-asm")
+  {
     createDirectory(outDir);
     annoGenome(argv[o.ind], windowSize, repCutoff, hpc, k, threadNum, fpsCutoff,
                epsilon, outDir, monoTemFaFile, maxHORLen, lengthCutoff,
                onlyScan, maxRegionLength, minRegionLength, genomeCutOff);
-    // return;
+  }
+
+  else // anno-read
+  {
+    createDirectory(outDir);
+    k = 9;
+    hpc = 0;
+    depSeq2Monoblock(argv[o.ind], windowSize, repCutoff, hpc, k, threadNum,
+                     fpsCutoff, epsilon, outDir, monoTemFaFile, maxHORLen,
+                     lengthCutoff, onlyScan);
   }
 
   return 0;
