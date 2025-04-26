@@ -69,7 +69,7 @@ cp lib/libspoa.a ../centroAnno/lib/
 
 Basic command:
 ```bash
-./centroAnno [Options:] <in.fa>
+./centroAnno [Options:] <in.fa> -o <out_dir>
 ```
 The specific parameters are as follows:
 ```bash
