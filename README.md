@@ -143,12 +143,6 @@ Analyze the structure of centromere using template information from a given cent
 ./centroAnno example/cen21.fa -o example/test -m example/AlphaSat.fa
 ```
 
-Analyze the tendem repeat unit and HOR from a given genome/assembly/long sequencing read:
-
-```bash
-./centroAnno example/simulated_genome.fasta -o example/test -G true
-```
-
 ## Output
 If the above example runs successfully, the folder 'test' will be the following files:
 
