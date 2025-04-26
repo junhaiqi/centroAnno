@@ -8,17 +8,20 @@ cd centroAnno && make -j8  # C++11 required to compile
 # Run on test data
 ./centroAnno example/cen21.fa -o test
 
-# Analyze the tandem repeats/HORs from a given **chromosome/assembly/general sequence** (No prior information required):
-./centroAnno $your_genome.fa -o $your_output -G true
+# Analyze the tandem repeats/HORs from given **chromosomes/assemblies/general sequences** (No prior information required):
+./centroAnno $your_genome.fa -o $your_output -x anno-asm
 
 # An example command for analyzing the human chromosome 1:
-./centroAnno $your_chr1.fasta -o $your_chr1_out -k 10 -r 0.3 -L 10000 -G true -A 1000000
+./centroAnno $your_chr1.fasta -o $your_chr1_out -x anno-asm
 
-# Analyze the structure of centromere without template information from a given **centromeric alpha-satellite sequence/centromeric alpha-satellite assembly**:
-./centroAnno $your_centromere.fa -o $your_output
+# Analyze the structure of centromere without template information from given **centromeric alpha-satellite sequences/centromeric alpha-satellite assemblies**:
+./centroAnno $your_centromere.fa -o $your_output -x anno-sat-asm
 
-# Analyze the structure of centromere with template information from a given **centromeric alpha-satellite sequence/centromeric alpha-satellite assembly**:
-./centroAnno $your_centromere.fa -m $your_templates.fa -o $your_output
+# Analyze the structure of centromere with template information from given **centromeric alpha-satellite sequences/centromeric alpha-satellite assemblies**:
+./centroAnno $your_centromere.fa -m $your_templates.fa -o $your_output -x anno-sat-asm
+
+# Analyze the structure of centromere with template information from given **sequencing reads**:
+./centroAnno $your_sequencing_reads.fa -o $your_output -x anno-sat-asm
 ```
 
 
