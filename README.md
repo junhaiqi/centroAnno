@@ -5,7 +5,7 @@
 git clone https://github.com/junhaiqi/centroAnno.git
 cd centroAnno && make -j8  # C++11 required to compile
 
-# Run on test data
+# Run on test data (Default: Analyze centromeric alpha-satellite sequences/centromeric alpha-satellite assemblies (like HiCAT/HORmon/GRMhor) directly)
 ./centroAnno example/cen21.fa -o test
 
 # Analyze the tandem repeats/HORs from given **chromosomes/assemblies/general sequences** (No prior information required):
