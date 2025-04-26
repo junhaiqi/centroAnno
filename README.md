@@ -21,7 +21,7 @@ cd centroAnno && make -j8  # C++11 required to compile
 ./centroAnno $your_centromere.fa -m $your_templates.fa -o $your_output -x anno-sat-asm
 
 # Analyze the structure of centromere with template information from given **sequencing reads**:
-./centroAnno $your_sequencing_reads.fa -o $your_output -x anno-sat-asm
+./centroAnno $your_sequencing_reads.fa -o $your_output -x anno-read
 ```
 
 
