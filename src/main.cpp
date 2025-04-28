@@ -256,7 +256,7 @@ int main(int argc, char *argv[]) {
   float epsilon = 0.95;
   char *monoTemFaFile = "";
   int maxHORLen = 50;
-  int lengthCutoff = 5000;
+  int lengthCutoff = 1000;
   int maxRegionLength = 1000000;
   int minRegionLength = 100;
   float genomeCutOff = 0.8;
@@ -391,7 +391,7 @@ int main(int argc, char *argv[]) {
     fprintf(stderr, "  -M INT     Specify the maximum number of monomers that "
                     "a HOR can contain [default = 50]\n");
     fprintf(stderr, "  -L INT     Specify the length cutoff that "
-                    "the annotated sequence needs to meet [default = 5000]\n");
+                    "the annotated sequence needs to meet [default = 1000]\n");
     fprintf(stderr, "  -A INT     Specify the maxinum length cutoff that "
                     "the annotated region in the genome needs to meet for speed [default = 1000000]\n");
     fprintf(stderr, "  -N INT     Specify the mininum length cutoff that "
