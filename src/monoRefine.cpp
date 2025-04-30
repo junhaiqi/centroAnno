@@ -32,7 +32,7 @@ void sampleClustering(const SEQ &sequence,
     printf("%s may not contain repeat unit! (can't inference monomer templates "
            "by clustering)\n",
            sequence.seqName);
-    exit(-1);
+    return;
   }
   blocks.resize(idx);
   vector<vector<float>> idenMatrix(demcompBlockRes.size(),
