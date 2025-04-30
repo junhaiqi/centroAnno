@@ -49,7 +49,7 @@ void monoTempInference(SEQ &sequence, const int &k, const float &kIdenCf,
                                            suppRepeatLenCount);
           int maxCount = 0;
           int mode = findMode(subDistList, maxCount);
-          if (maxCount > 3 &&
+          if (maxCount >= 2 &&
               mode > 10) { // We find the repeats which length larger 10.
             auto it =
                 std::find(diffValueList.begin(), diffValueList.end(), mode);
