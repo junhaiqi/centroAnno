@@ -384,7 +384,7 @@ int main(int argc, char *argv[]) {
                     "[default = 1]\n");
     fprintf(stderr, "  -e FLOAT   Specify the indentity cutoff for DBSCAN "
                     "[default = 0.95]\n");
-    fprintf(stderr, "  -x STR   Specify the annotated data type (anno-sat-asm: annotate centromeric alpha-satellite sequence (HiCAT/HORmon-like input), anno-asm: annotate chromosome/assembly, or anno-read: annotate sequencing reads)\n"
+    fprintf(stderr, "  -x STR     Specify the annotated data type (anno-sat-asm: annotate centromeric alpha-satellite sequence (HiCAT/HORmon-like input), anno-asm: annotate chromosome/assembly, or anno-read: annotate sequencing reads)"
       "[default is anno-sat-asm]\n");
     fprintf(stderr, "  -t INT     Specify the number of threads for template "
                     "inference [default = 8]\n");
