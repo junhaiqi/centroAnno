@@ -22,6 +22,9 @@ cd centroAnno && make -j8  # C++11 required to compile
 
 # Analyze the structure of centromere with template information from given **sequencing reads**:
 ./centroAnno $your_sequencing_reads.fa -o $your_output -x anno-read
+
+# Analyze and summarize the output of centroAnno, details in misc/misc/README.md.
+python misc/misc/cautils.py $centroAnno_output_dir $your_analysis_dir
 ```
 
 
@@ -158,7 +161,7 @@ If the above example runs successfully, the folder 'test' will be the following 
    | *_monomerTemplates.fa  | Load all monomers inferred by centroAnno |
    | *_HORs.fa  | Load all HORs inferred by centroAnno |
 
-The * indicates the name of each sequence in the input fasta/fastq.gz file. When the mononer name is in the form of 12', it means the reverse complement of monomer 12.
+The * indicates the name of each sequence in the input fasta/fastq.gz file. When the mononer name is in the form of 12', it means the reverse complement of monomer 12. We provide a script (see `misc/misc/README.md`) to analyze and summarize the output of centroAnno.
 
 ## Acknowledgments
 None.
