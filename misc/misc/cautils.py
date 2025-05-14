@@ -9,8 +9,9 @@ import random
 import matplotlib.cm as cm
 import matplotlib.colors as mcolors
 from matplotlib.colorbar import ColorbarBase
-from matplotlib import colormaps
-cmap = colormaps.get_cmap("viridis")
+# from matplotlib import colormaps
+# cmap = colormaps.get_cmap("viridis")
+cmap = plt.colormaps["viridis"]
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 repeat_region_minlen = 1000
