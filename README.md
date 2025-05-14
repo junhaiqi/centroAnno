@@ -23,7 +23,7 @@ cd centroAnno && make -j8  # C++11 required to compile
 # Analyze the structure of centromere with template information from given **sequencing reads**:
 ./centroAnno $your_sequencing_reads.fa -o $your_output -x anno-read
 
-# Analyze and summarize the output of centroAnno, details in misc/misc/README.md.
+# Analyze and summarize the output of centroAnno, details in misc/misc/README.md:
 python misc/misc/cautils.py $centroAnno_output_dir $your_analysis_dir
 ```
 
