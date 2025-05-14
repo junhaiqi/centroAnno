@@ -25,10 +25,6 @@ def find_mode(lst):
     counter = Counter(lst)  
     mode, count = counter.most_common(1)[0]  
     return mode, count
-
-def sort_bed_file(input_file, output_file):
-    cmd = f'./bedtools sort -i {input_file} >{output_file}'
-    os.system( cmd )
     
 def draw_mono_fig(bed_file, out_fig):
     data = []
@@ -166,7 +162,7 @@ def main(centroAnno_output_dir, analysis_out_dir):
         if abs(region_ed - region_st) >= repeat_region_minlen:
             w_file.write(f'{info[0]}\t{region_st}\t{region_ed}\t{rep_len}\n')
     w_file.close()
-    sort_bed_file(out_put_mono_bed, out_put_mono_sorted_bed)
+    # sort_bed_file(out_put_mono_bed, out_put_mono_sorted_bed)
     ########################## get repeat regions ##########################
     
     ########################## get top10 repeats ##########################
@@ -236,7 +232,7 @@ def main(centroAnno_output_dir, analysis_out_dir):
     ########################## get HORs ##########################
     
     ########################## Visualization ##########################
-    draw_mono_fig(out_put_mono_sorted_bed, out_mono_fig)
+    draw_mono_fig(out_put_mono_bed, out_mono_fig)
     draw_hor_fig(out_high_confidence_hor_file, out_hor_fig)
     ########################## Visualization ##########################
 
