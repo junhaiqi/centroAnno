@@ -1,6 +1,6 @@
 # Get Started
 
-We provide a script (Tested under python 3.10.9) to quickly analyze (usually a few seconds) the output of centroAnno. This script only needs the package matplotlib.
+We provide a script (tested under python 3.10.9) to quickly analyze (usually a few seconds) the output of centroAnno. This script only needs the package matplotlib.
 ```bash
 # Install
 pip install matplotlib
