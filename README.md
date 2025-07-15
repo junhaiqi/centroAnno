@@ -87,7 +87,7 @@ Options:
   -w INT     Specify the window size for infering templates [default = 500000]
   -c BOOL    Specify the homopolymer compression (1: yes, 0: no) [default = 1]
   -e FLOAT   Specify the indentity cutoff for DBSCAN [default = 0.95]
-  -x STR   Specify the annotated data type (anno-sat-asm: annotate centromeric alpha-satellite sequence (HiCAT/HORmon-like input), anno-asm: annotate chromosome/assembly, or anno-read: annotate sequencing reads)
+  -x STR     Specify the annotated data type (anno-sat-asm: annotate centromeric alpha-satellite sequence (HiCAT/HORmon-like input), anno-asm: annotate chromosome/assembly, or anno-read: annotate sequencing reads)
 [default is anno-sat-asm]
   -t INT     Specify the number of threads for template inference [default = 8]
   -M INT     Specify the maximum number of monomers that a HOR can contain [default = 50]
