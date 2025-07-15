@@ -23,3 +23,6 @@ python cautils.py test tmp1
 `mono.svg`: Visualization of tandem repeat units.
 
 `hor.svg`: Visualization of HORs.
+
+# Note
+There are some visualizations (hor.svg and mono.svg) and some bed files. The centromere region has significant tandem repeat characteristics, which means that you can estimate its position in the genome by looking at mono.svg. More precisely, you can calculate more accurate centromere positions by analyzing repeat_regions.bed (for example, filter regions with a length exceeding a certain threshold (such as 100kb), and further merge adjacent regions (such as regions with a difference of no more than 15kb)).
