@@ -1,7 +1,10 @@
 ## Getting Started
 
 ```bash
-# Install centroAnno
+# Install centroAnno by conda
+conda install qjh96::centroanno
+
+# Install centroAnno by source codes
 git clone https://github.com/junhaiqi/centroAnno.git
 cd centroAnno && make -j8  # C++11 required to compile
 
