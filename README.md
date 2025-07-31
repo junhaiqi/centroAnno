@@ -65,7 +65,7 @@ git clone --recursive https://github.com/rvaser/spoa.git
 cd spoa
 mkdir build
 cd build
-cmake -DCMAKE_CXX_FLAGS="-march=x86-64" ..
+cmake -DCMAKE_CXX_FLAGS="-march=x86-64" .. or cmake -DCMAKE_CXX_FLAGS="-O2 -march=core2 -mtune=generic" .. (More conservative)
 make -j8
 cp lib/libspoa.a ../centroAnno/lib/
 ```
