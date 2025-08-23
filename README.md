@@ -102,11 +102,11 @@ Options:
   example command: ./centroAnno -o test test.fa
 ```
 
-In fact, centroAnno's multi-threaded computing is mainly used for sequence decomposition problems (see https://academic.oup.com/bioinformatics/article/36/Supplement_1/i93/5870498). Sequence decomposition requires a lot of memory and is linearly related to the number of threads, the number of threads you set depends on the available memory.
+In fact, centroAnno's multi-threaded computing is mainly used for sequence decomposition problems (see https://academic.oup.com/bioinformatics/article/36/Supplement_1/i93/5870498). Sequence decomposition requires a lot of memory and is linearly related to the number of threads, the number of threads you set depends on the available memory. 
 
 When we analyzed human CHM13 chromosome 1, annotation of chromosome 1 can be completed in ~1 hour, with a peak memory usage of ~3.9GB.
 
-In fact, we have recently proposed a new low-memory algorithm for solving sequence decomposition problems, which is currently being tested, which will greatly reduce memory requirements for better parallel analysis. Welcome your follow-up attention.
+We have recently proposed a new low-memory algorithm for solving sequence decomposition problems, which is currently being tested, which will greatly reduce memory requirements for better parallel analysis, see [wsd](https://github.com/junhaiqi/wsd.git). 
 
 ## Example
 Analyze the structure of centromere without template information from a given centromere sequence:
