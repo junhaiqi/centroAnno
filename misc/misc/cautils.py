@@ -118,71 +118,78 @@ def main(centroAnno_output_dir, analysis_out_dir):
     if os.path.exists(analysis_out_dir) == False:
         os.makedirs(analysis_out_dir)
     
-    mono_dem_file = ""
-    hor_dem_file = ""
+    # mono_dem_file = ""
+    # hor_dem_file = ""
     
     out_put_mono_bed = f'{analysis_out_dir}/repeat_regions.bed'
-    out_put_mono_sorted_bed = f'{analysis_out_dir}/repeat_regions_sorted.bed'
+    # out_put_mono_sorted_bed = f'{analysis_out_dir}/repeat_regions_sorted.bed'
     out_top10_monos_file = f'{analysis_out_dir}/top10_repeats.bed'
     out_high_confidence_hor_file = f'{analysis_out_dir}/HORs.bed'
     out_mono_fig = f'{analysis_out_dir}/mono.svg'
     out_hor_fig = f'{analysis_out_dir}/hor.svg'
     
+    mono_file_lst = []
+    hor_file_lst = []
     for item in os.listdir( centroAnno_output_dir ):
         if "_decomposedResult.csv" in item:
             mono_dem_file = f'{centroAnno_output_dir}/{item}'
+            mono_file_lst.append( mono_dem_file )
         elif "_horDecomposedResult.csv" in item:
             hor_dem_file = f'{centroAnno_output_dir}/{item}'
-            
+            hor_file_lst.append( hor_dem_file )
+    mono_file_lst.sort()
+    hor_file_lst.sort()        
     ########################## get repeat regions ##########################
     w_file = open(out_put_mono_bed, 'w')
-    with open( mono_dem_file ) as f:
-        lines = f.readlines()
-        region_st = int(lines[1].strip('\n').split(',')[2])
-        region_ed = int(lines[1].strip('\n').split(',')[3])
-        rep_len_list = []
-        for line in lines:
-            if 'name' in line:
-                continue
-            info = line.strip('\n').split(',')
-            st = int(info[2])
-            ed = int(info[3])
-            # iden = float(info[-2])
-            if abs(region_ed - st) < 100:
-                region_ed = ed
-                rep_len_list.append( int( info[-1] ) )
-            else:
-                rep_len = find_mode( rep_len_list )[0]
-                if abs(region_ed - region_st) >= repeat_region_minlen:
-                    w_file.write(f'{info[0]}\t{region_st}\t{region_ed}\t{rep_len}\n')
-                rep_len_list = []
-                region_st = st
-                region_ed = ed
-        rep_len = find_mode( rep_len_list )[0]
-        if abs(region_ed - region_st) >= repeat_region_minlen:
-            w_file.write(f'{info[0]}\t{region_st}\t{region_ed}\t{rep_len}\n')
+    for mono_dem_file in mono_file_lst: 
+        with open( mono_dem_file ) as f:
+            lines = f.readlines()
+            region_st = int(lines[1].strip('\n').split(',')[2])
+            region_ed = int(lines[1].strip('\n').split(',')[3])
+            rep_len_list = []
+            for line in lines:
+                if 'name' in line:
+                    continue
+                info = line.strip('\n').split(',')
+                st = int(info[2])
+                ed = int(info[3])
+                # iden = float(info[-2])
+                if abs(region_ed - st) < 100:
+                    region_ed = ed
+                    rep_len_list.append( int( info[-1] ) )
+                else:
+                    rep_len = find_mode( rep_len_list )[0]
+                    if abs(region_ed - region_st) >= repeat_region_minlen:
+                        w_file.write(f'{info[0]}\t{region_st}\t{region_ed}\t{rep_len}\n')
+                    rep_len_list = []
+                    region_st = st
+                    region_ed = ed
+            rep_len = find_mode( rep_len_list )[0]
+            if abs(region_ed - region_st) >= repeat_region_minlen:
+                w_file.write(f'{info[0]}\t{region_st}\t{region_ed}\t{rep_len}\n')
     w_file.close()
     # sort_bed_file(out_put_mono_bed, out_put_mono_sorted_bed)
     ########################## get repeat regions ##########################
     
     ########################## get top10 repeats ##########################
     repeat_dict = {}
-    with open( mono_dem_file ) as f:
-        lines = f.readlines()
-        for line in lines:
-            if 'name' in line:
-                continue
-            info = line.strip('\n').split(',')
-            rep_len = int( info[-1] )
-            name = info[0]
-            if name not in repeat_dict:
-                repeat_dict[name] = {}
-            key = str(rep_len) + 'bp'
-            rep_base_num = int( info[3] ) - int( info[2] )
-            if key in repeat_dict[name]:
-                repeat_dict[name][key] += rep_base_num
-            else:
-                repeat_dict[name][key] = rep_base_num
+    for mono_dem_file in mono_file_lst: 
+        with open( mono_dem_file ) as f:
+            lines = f.readlines()
+            for line in lines:
+                if 'name' in line:
+                    continue
+                info = line.strip('\n').split(',')
+                rep_len = int( info[-1] )
+                name = info[0]
+                if name not in repeat_dict:
+                    repeat_dict[name] = {}
+                key = str(rep_len) + 'bp'
+                rep_base_num = int( info[3] ) - int( info[2] )
+                if key in repeat_dict[name]:
+                    repeat_dict[name][key] += rep_base_num
+                else:
+                    repeat_dict[name][key] = rep_base_num
                 
     w_file = open( out_top10_monos_file, 'w')
     for name in repeat_dict:
@@ -195,29 +202,30 @@ def main(centroAnno_output_dir, analysis_out_dir):
     
     ########################## get HORs ##########################
     hor_dict = {}
-    with open( hor_dem_file ) as f:
-        lines = f.readlines()
-        for line in lines:
-            if 'name' in line:
-                continue
-            info = line.strip('\n').split(',')
-            name = info[0]
-            if name not in hor_dict:
-                hor_dict[name] = {}
-            hor_name = info[1]
-            iden = float( info[-3] )
-            st = int( info[2] )
-            ed = int( info[3] )
-            hor_len = int( info[-2] )
-            hor_mon_num = hor_name.count('_') + 1
-            if iden >= hor_confidence_cutoff and hor_mon_num > 1:
-                if hor_name in hor_dict[name]:
-                    if abs(hor_dict[name][ hor_name ][-1][1] - st) < 100:
-                        hor_dict[name][ hor_name ][-1][1] = ed
+    for hor_dem_file in hor_file_lst:
+        with open( hor_dem_file ) as f:
+            lines = f.readlines()
+            for line in lines:
+                if 'name' in line:
+                    continue
+                info = line.strip('\n').split(',')
+                name = info[0]
+                if name not in hor_dict:
+                    hor_dict[name] = {}
+                hor_name = info[1]
+                iden = float( info[-3] )
+                st = int( info[2] )
+                ed = int( info[3] )
+                hor_len = int( info[-2] )
+                hor_mon_num = hor_name.count('_') + 1
+                if iden >= hor_confidence_cutoff and hor_mon_num > 1:
+                    if hor_name in hor_dict[name]:
+                        if abs(hor_dict[name][ hor_name ][-1][1] - st) < 100:
+                            hor_dict[name][ hor_name ][-1][1] = ed
+                        else:
+                            hor_dict[name][ hor_name ].append( [st, ed, hor_mon_num, hor_len] )
                     else:
-                        hor_dict[name][ hor_name ].append( [st, ed, hor_mon_num, hor_len] )
-                else:
-                    hor_dict[name][ hor_name ] = [ [st, ed, hor_mon_num, hor_len] ]
+                        hor_dict[name][ hor_name ] = [ [st, ed, hor_mon_num, hor_len] ]
                                     
     w_file = open( out_high_confidence_hor_file, 'w')
     for key in hor_dict:
