@@ -70,6 +70,13 @@ make -j8
 cp lib/libspoa.a ../centroAnno/lib/
 ```
 
+## Singularity Image
+
+We also provide a [singularity image](https://doi.org/10.6084/m9.figshare.30138130.v1). A simple command to use it is as follows:
+
+```bash
+singularity exec /path/to/centroAnno.simg centroAnno $chr.cen.fa -o $chr.cen.denove -x anno-asm -t 20
+```
 
 ## Usage
 
@@ -133,7 +140,7 @@ If the above example runs successfully, the folder 'test' will be the following 
 The * indicates the name of each sequence in the input fasta/fastq.gz file. When the mononer name is in the form of 12', it means the reverse complement of monomer 12. We provide a script (see `misc/misc/README.md`) to analyze and summarize the output of centroAnno.
 
 ## Acknowledgments
-None.
+We thank [Meng Zhou](https://github.com/zhoudreames) for building the centroAnno v1.02 singularity image.
 
 ## License 
 MIT License.
