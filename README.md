@@ -37,6 +37,7 @@ centroAnno is a prior-independent tool for automatic and efficient centromere/te
 
   * [Requirements](#requirements)
   * [Installation](#installation)
+  * [Singularity Image](#singularityimage)
   * [Usage](#usage)
   * [Example](#example)
   * [Output](#output)
