@@ -32,8 +32,11 @@ def draw_mono_fig(bed_file, out_fig):
         lines = f.readlines()
         for line in lines:
             info = line.strip('\n').split('\t')
-            this_data = [info[0], int(info[1]), int( info[2] ), int( info[3] )]
-            data.append( this_data )
+            try:
+                this_data = [info[0], int(info[1]), int( info[2] ), int( info[3] )]
+                data.append( this_data )
+            except:
+                print( f"Warning Line: {line}" )
             
     hor_lengths = [row[3] for row in data]
     min_len, max_len = min(hor_lengths), max(hor_lengths)
