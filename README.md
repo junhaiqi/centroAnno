@@ -102,7 +102,7 @@ Options:
 [default is anno-sat-asm]
   -t INT     Specify the number of threads for template inference [default = 8]
   -M INT     Specify the maximum number of monomers that a HOR can contain [default = 50]
-  -L INT     Specify the length cutoff that the annotated sequence needs to meet [default = 5000]
+  -L INT     Specify the length cutoff that the annotated sequence needs to meet [default = 1000]
   -A INT     Specify the maxinum length cutoff that the annotated region in the genome needs to meet for speed [default = 1000000]
   -N INT     Specify the mininum length cutoff that the annotated region in the genome needs to meet for accuracy [default = 100]
   -F FLOAT   Specify the indentity cutoff for genome annotation [default = 0.8]
