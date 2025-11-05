@@ -8,26 +8,19 @@ conda install qjh96::centroanno
 git clone https://github.com/junhaiqi/centroAnno.git
 cd centroAnno && make -j8  # C++11 required to compile
 
-# Run on test data (Default: Analyze centromeric alpha-satellite sequences/centromeric alpha-satellite assemblies (like HiCAT/HORmon/GRMhor) directly)
-./centroAnno example/cen21.fa -o test
+./centroAnno example/cen21.fa -o test # Run on test data (Default: Analyze centromeric alpha-satellite sequences/centromeric alpha-satellite assemblies (Only includes like alpha-satellite!!! Like input of HiCAT/HORmon/GRMhor) directly)
 
-# Analyze the tandem repeats/HORs from given **chromosomes/assemblies/general sequences** (No prior information required):
-./centroAnno $your_genome.fa -o $your_output -x anno-asm
+./centroAnno $your_genome.fa -o $your_output -x anno-asm # Analyze the tandem repeats/HORs from given **chromosomes/assemblies/general sequences** (No prior information required)
 
-# An example command for analyzing the human chromosome 1:
-./centroAnno $your_chr1.fasta -o $your_chr1_out -x anno-asm
+./centroAnno $your_chr1.fasta -o $your_chr1_out -x anno-asm # An example command for analyzing the human chromosome 1
 
-# Analyze the structure of centromere without template information from given **centromeric alpha-satellite sequences/centromeric alpha-satellite assemblies**:
-./centroAnno $your_centromere.fa -o $your_output -x anno-sat-asm
+./centroAnno $your_centromere.fa -o $your_output -x anno-sat-asm # Analyze the structure of centromere without template information from given **centromeric alpha-satellite sequences/centromeric alpha-satellite assemblies**
 
-# Analyze the structure of centromere with template information from given **centromeric alpha-satellite sequences/centromeric alpha-satellite assemblies**:
-./centroAnno $your_centromere.fa -m $your_templates.fa -o $your_output -x anno-sat-asm
+./centroAnno $your_centromere.fa -m $your_templates.fa -o $your_output -x anno-sat-asm # Analyze the structure of centromere with template information from given **centromeric alpha-satellite sequences/centromeric alpha-satellite assemblies**
 
-# Analyze the structure of centromere from given **sequencing reads**:
-./centroAnno $your_sequencing_reads.fa -o $your_output -x anno-read
+./centroAnno $your_sequencing_reads.fa -o $your_output -x anno-read # Analyze the structure of centromere from given **sequencing reads**
 
-# Analyze and summarize the output of centroAnno, details in misc/misc/README.md:
-python misc/misc/cautils.py $centroAnno_output_dir $your_analysis_dir
+python misc/misc/cautils.py $centroAnno_output_dir $your_analysis_dir # Analyze and summarize the output of centroAnno, details in misc/misc/README.md:
 ```
 
 
