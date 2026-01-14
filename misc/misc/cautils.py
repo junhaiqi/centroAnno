@@ -30,6 +30,8 @@ def draw_mono_fig(bed_file, out_fig):
     data = []
     with open(bed_file) as f:
         lines = f.readlines()
+        if len(lines) == 0:
+            return
         for line in lines:
             info = line.strip('\n').split('\t')
             try:
@@ -73,6 +75,8 @@ def draw_hor_fig(bed_file, out_fig):
     data = []
     with open(bed_file) as f:
         lines = f.readlines()
+        if len(lines) == 0:
+            return
         for line in lines:
             info = line.strip('\n').split('\t')
             # this_data = [info[0], info[1], int( info[2] ), int( info[3] ), int( info[4] ), int( info[5] ), int( info[6] )]
