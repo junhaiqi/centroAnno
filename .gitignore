@@ -1,0 +1,22 @@
+# Build artifacts
+*.o
+*.a
+*.so
+centroAnno
+*.exe
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*~
+
+# OS
+.DS_Store
+Thumbs.db

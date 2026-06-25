@@ -1,0 +1,630 @@
+#!/usr/bin/env python3
+"""
+detectHORs.py
+
+Based on CentroAnno's diagonal-based HOR detection algorithm.
+Reads *_decomposedResult.csv and outputs ALL possible HOR patterns
+and their occurrence regions.
+
+Features:
+  - Supports both anno-sat (with header, 6 cols) and anno-asm (no header, 7 cols).
+  - Per-region HOR detection: anno-asm CSVs contain multiple repeat regions
+    (e.g. Pos:0:5000, Pos:20000:30000). Each region is processed independently
+    to avoid cross-region monomer ID collisions.
+  - Nested HOR compression: patterns like 1-2-3-2-3-2-3-5-6 are reported as
+    1-(2-3)x3-5-6 when a sub-pattern is tandemly repeated.
+  - Pattern-level filtering by max copies (--min-max-copies).
+
+Core idea (from CentroAnno):
+  For a candidate HOR length L (diagonal index d = L-1):
+    Build diagonal: diag[i] = 1 if mono[i] == mono[i+L], else 0.
+    If a maximal continuous stretch of 1s has length > d
+    (i.e. >= L), a HOR of length L is found in that region.
+
+Filtering rules:
+  1. Single-monomer repeats (e.g. 1-1-1-1) are NOT HORs.
+  2. If a pattern is composed of k>1 copies of a smaller valid
+     HOR (e.g. 1-2-1-2 = 2 copies of 1-2), the larger pattern
+     is discarded and only the fundamental (smallest) one is kept.
+"""
+
+import argparse
+import csv
+import os
+import sys
+from collections import defaultdict
+
+import numpy as np
+
+
+# Known header keywords used for auto-detection
+_HEADER_KEYWORDS = {
+    'monomer', 'mononer', 'sequence', 'start', 'end',
+    'identity', 'position', 'length', 'name', 'estimated', 'strand',
+}
+
+
+def _looks_like_header(row):
+    """Return True if a CSV row looks like a header line."""
+    return any(
+        any(kw in cell.lower() for kw in _HEADER_KEYWORDS)
+        for cell in row
+    )
+
+
+def _parse_header_row(fieldnames):
+    """Detect column keys from a header row (anno-sat format)."""
+    fieldnames = [f.strip() for f in fieldnames]
+    if 'monomer name' in fieldnames:
+        name_key = 'monomer name'
+    elif 'mononer name' in fieldnames:
+        name_key = 'mononer name'
+    else:
+        raise ValueError("Cannot find monomer name column in CSV header: {}".format(fieldnames))
+
+    if 'start position' in fieldnames:
+        start_key = 'start position'
+        end_key   = 'end position'
+    else:
+        start_key = 'start_pos'
+        end_key   = 'end_pos'
+
+    has_strand = 'strand' in fieldnames or 'Strand' in fieldnames
+    seq_key = 'sequence name' if 'sequence name' in fieldnames else 'Sequence name'
+    return name_key, start_key, end_key, has_strand, seq_key
+
+
+def _extract_region(raw_name, seq_name):
+    """Extract region prefix from genome-mode monomer names.
+
+    anno-asm monomer names look like  Pos:0:5000_3  or  Pos:190000:240000_0.
+    Returns (region_key, stripped_name).
+    For anno-sat (no Pos: prefix), region_key = seq_name.
+    """
+    if raw_name.startswith('Pos:') and '_' in raw_name:
+        idx = raw_name.index('_')
+        region = raw_name[:idx]
+        name = raw_name[idx + 1:]
+        return region, name
+    return seq_name, raw_name
+
+
+def parse_csv(csv_path):
+    """Parse centroAnno decomposedResult.csv.
+
+    Supports three formats:
+      1. anno-sat (header present, 6 cols):
+         sequence name, monomer name, start position, end position, estimated identity, length
+      2. anno-asm (NO header, 7 cols):
+         sequence name, monomer name, strand, start position, end position, estimated identity, length
+      3. Old anno-sat (header present, 6 cols, 'mononer name'):
+
+    Returns (records_by_region, total_count).
+    records_by_region is a dict: {region_key -> [record_dicts]}.
+    Each record has: seq_name, mono_id, name, strand, start, end, identity.
+    """
+    records_by_region = defaultdict(list)
+    total = 0
+
+    with open(csv_path, 'r', newline='') as fh:
+        reader = csv.reader(fh)
+        first_row = next(reader)
+
+        if _looks_like_header(first_row):
+            # -------------------------- anno-sat with header --------------------------
+            name_key, start_key, end_key, has_strand, seq_key = _parse_header_row(first_row)
+
+            fh.seek(0)
+            dict_reader = csv.DictReader(fh)
+            for row in dict_reader:
+                raw_name = row[name_key].strip()
+                strand = row.get('strand', row.get('Strand', '+')).strip() if has_strand else '+'
+
+                region, name = _extract_region(raw_name, row.get(seq_key, '').strip())
+
+                # For old anno-sat without explicit strand column, infer from trailing '
+                if not has_strand and name.endswith("'"):
+                    name = name[:-1]
+                    strand = '-'
+
+                mono_id = name + "'" if strand == '-' else name
+
+                id_val = row.get('estimated identity', row.get('identity', '0'))
+                try:
+                    identity = float(id_val)
+                except ValueError:
+                    identity = 0.0
+
+                records_by_region[region].append({
+                    'seq_name': row.get(seq_key, '').strip(),
+                    'region'  : region,
+                    'mono_id' : mono_id,
+                    'name'    : name,
+                    'strand'  : strand,
+                    'start'   : int(row[start_key]),
+                    'end'     : int(row[end_key]),
+                    'identity': identity,
+                })
+                total += 1
+        else:
+            # -------------------------- anno-asm without header --------------------------
+            rows = [first_row]
+            rows.extend(reader)
+
+            for row in rows:
+                if len(row) < 7:
+                    continue
+                seq_name = row[0].strip()
+                raw_name = row[1].strip()
+                strand = row[2].strip()
+
+                region, name = _extract_region(raw_name, seq_name)
+                mono_id = name + "'" if strand == '-' else name
+
+                try:
+                    identity = float(row[5])
+                except ValueError:
+                    identity = 0.0
+
+                records_by_region[region].append({
+                    'seq_name': seq_name,
+                    'region'  : region,
+                    'mono_id' : mono_id,
+                    'name'    : name,
+                    'strand'  : strand,
+                    'start'   : int(row[3]),
+                    'end'     : int(row[4]),
+                    'identity': identity,
+                })
+                total += 1
+
+    return dict(records_by_region), total
+
+
+# ============================================================================
+# HOR detection core (unchanged logic)
+# ============================================================================
+
+def build_diagonal(mono_ids, hor_len):
+    """Build one diagonal for candidate HOR length L = hor_len."""
+    n = len(mono_ids)
+    diag = []
+    for i in range(n - hor_len):
+        diag.append(1 if mono_ids[i] == mono_ids[i + hor_len] else 0)
+    return diag
+
+
+def find_stretches(diag):
+    """Return list of (start_index, length) for every maximal
+    continuous stretch of 1s inside diag."""
+    stretches = []
+    n = len(diag)
+    i = 0
+    while i < n:
+        if diag[i] == 1:
+            s = i
+            while i < n and diag[i] == 1:
+                i += 1
+            stretches.append((s, i - s))
+        else:
+            i += 1
+    return stretches
+
+
+def is_fundamental_hor(pattern):
+    """Check whether a monomer-name pattern is a *fundamental* HOR."""
+    L = len(pattern)
+    if L < 2:
+        return False
+    if len(set(pattern)) < 2:
+        return False
+    for d in range(1, L):
+        if L % d == 0:
+            sub = pattern[:d]
+            if pattern == sub * (L // d):
+                return False
+    return True
+
+
+def canonical_cyclic(pattern):
+    """Return the lexicographically smallest cyclic shift of a pattern."""
+    L = len(pattern)
+    if L == 0:
+        return tuple()
+    best = None
+    for i in range(L):
+        shifted = tuple(pattern[i:] + pattern[:i])
+        if best is None or shifted < best:
+            best = shifted
+    return best
+
+
+def detect_all_hors(records, max_hor_len=50, min_copies=2, min_identity=0.0):
+    """Detect all possible HORs from monomer decomposition records.
+    Returns a list of dicts, each describing one HOR occurrence.
+    """
+    mono_ids = [r['mono_id'] for r in records]
+    n = len(mono_ids)
+    if n < 4:
+        return []
+    max_hor_len = min(max_hor_len, n - 1)
+    results = []
+
+    for hor_len in range(2, max_hor_len + 1):
+        diag = build_diagonal(mono_ids, hor_len)
+        stretches = find_stretches(diag)
+
+        for stretch_start, stretch_len in stretches:
+            if stretch_len < hor_len:
+                continue
+
+            copies = stretch_len // hor_len + 1
+            if copies < min_copies:
+                continue
+
+            start_mono = stretch_start
+            end_mono   = start_mono + copies * hor_len - 1
+            if end_mono >= n:
+                end_mono = n - 1
+
+            pattern = mono_ids[start_mono:start_mono + hor_len]
+            if not is_fundamental_hor(pattern):
+                continue
+
+            raw_pattern_str = '_'.join(pattern)
+            canonical = canonical_cyclic(pattern)
+            pattern_str = '_'.join(canonical)
+
+            idents = [records[i]['identity'] for i in range(start_mono, end_mono + 1)
+                      if records[i]['identity'] > 0]
+            mean_identity = float(np.mean(idents)) if idents else 0.0
+            if mean_identity < min_identity:
+                continue
+
+            results.append({
+                'seq_name'    : records[start_mono]['seq_name'],
+                'region'      : records[start_mono].get('region', ''),
+                'pattern'     : pattern_str,
+                'raw_pattern' : raw_pattern_str,
+                'hor_len'     : hor_len,
+                'start_mono'  : start_mono,
+                'end_mono'    : end_mono,
+                'start_pos'   : records[start_mono]['start'],
+                'end_pos'     : records[end_mono]['end'],
+                'copies'      : copies,
+                'mean_identity': round(mean_identity, 6),
+            })
+
+    results.sort(key=lambda x: (x['start_pos'], x['hor_len']))
+    return results
+
+
+# ============================================================================
+# Nested HOR compression
+# ============================================================================
+
+def _find_best_repeat(pattern):
+    """Find the best contiguous repeated sub-pattern in a pattern.
+
+    Returns (start_index, sub_pattern_list, repeat_count, coverage) or None.
+    "Best" is defined as the repeat covering the maximum number of monomers.
+    """
+    n = len(pattern)
+    if n <= 2:
+        return None
+
+    best = None
+    best_score = 0
+
+    for d in range(1, n // 2 + 1):
+        for i in range(n - 2 * d + 1):
+            sub = pattern[i:i + d]
+            k = 1
+            while i + (k + 1) * d <= n and pattern[i + k * d:i + (k + 1) * d] == sub:
+                k += 1
+            if k >= 2:
+                score = k * d
+                if score > best_score:
+                    best_score = score
+                    best = (i, sub, k)
+
+    return best
+
+
+def compress_pattern(pattern):
+    """Recursively compress a pattern by finding repeated sub-patterns.
+
+    Returns a nested list structure where each element is either:
+      - a string (single monomer)
+      - a tuple (sub_structure_list, repeat_count)
+
+    Example:
+      ['1','2','3','2','3','2','3','5','6']
+      → ['1', (['2','3'], 3), '5', '6']
+    """
+    n = len(pattern)
+    if n == 0:
+        return []
+    if n == 1:
+        return [pattern[0]]
+
+    repeat = _find_best_repeat(pattern)
+    if repeat is None:
+        # No repeat found; return as individual monomers
+        return pattern[:]
+
+    i, sub, k = repeat
+    prefix = compress_pattern(pattern[:i])
+    compressed_sub = compress_pattern(sub)
+    suffix = compress_pattern(pattern[i + k * len(sub):])
+
+    result = []
+    result.extend(prefix)
+    result.append((compressed_sub, k))
+    result.extend(suffix)
+    return result
+
+
+def format_compressed(structure):
+    """Convert nested compression structure to human-readable string.
+
+    Example:
+      ['1', (['2','3'], 3), '5', '6']  →  "1-(2-3)x3-5-6"
+    """
+    parts = []
+    for item in structure:
+        if isinstance(item, tuple):
+            sub_struct, count = item
+            sub_str = format_compressed(sub_struct)
+            parts.append(f"({sub_str})x{count}")
+        else:
+            parts.append(str(item))
+    return '-'.join(parts)
+
+
+def compress_pattern_cyclic(pattern):
+    """Compress a pattern, allowing cyclic permutation to find the shortest form.
+
+    Tries all cyclic shifts of the pattern, compresses each shift with the
+    standard greedy compressor, and returns the shortest compressed string.
+    Ties are broken by lexicographic order so the output is deterministic.
+
+    Example:
+      ['10', '2', '10', '2', '10', '2', '10', "28'", '7', '23', "22'", '2']
+      is canonically compressed as (10-2)x3-10-28'-7-23-22'-2,
+      but a cyclic shift gives the shorter (2-10)x4-28'-7-23-22'.
+    """
+    n = len(pattern)
+    if n == 0:
+        return ''
+    if n == 1:
+        return str(pattern[0])
+
+    best_compressed = None
+    best_len = None
+
+    for i in range(n):
+        shifted = pattern[i:] + pattern[:i]
+        struct = compress_pattern(shifted)
+        compressed = format_compressed(struct)
+        compressed_len = len(compressed)
+
+        if (best_compressed is None or
+                compressed_len < best_len or
+                (compressed_len == best_len and compressed < best_compressed)):
+            best_compressed = compressed
+            best_len = compressed_len
+
+    return best_compressed
+
+
+def compress_all_patterns(results):
+    """Add 'compressed_pattern' field to each result dict."""
+    for r in results:
+        pattern_list = r['pattern'].split('_')
+        r['compressed_pattern'] = compress_pattern_cyclic(pattern_list)
+    return results
+
+
+# ============================================================================
+# Output writers
+# ============================================================================
+
+def _region_sort_key(region_str):
+    """Extract start coordinate from 'Pos:start:end' or return string itself."""
+    if region_str.startswith('Pos:') and ':' in region_str[4:]:
+        parts = region_str[4:].split(':')
+        if len(parts) == 2:
+            try:
+                return int(parts[0])
+            except ValueError:
+                pass
+    return region_str
+
+
+def write_outputs(results, out_prefix):
+    """Write result files:
+      1) {prefix}_allHORs.csv        – every HOR occurrence / region
+      2) {prefix}_allHORPatterns.txt – distinct canonical patterns per region
+      3) {prefix}_allHORStats.txt    – statistics per (region, pattern)
+      4) {prefix}_allHORPatterns_compressed.txt – distinct compressed patterns per region
+
+    Sorting order within each file:
+      - Primary  : region genomic position ascending
+      - Secondary: total_span DESC → occ DESC → max_copies DESC
+    """
+    # 1) All HOR occurrences
+    hor_csv = out_prefix + '_allHORs.csv'
+    with open(hor_csv, 'w', newline='') as fh:
+        writer = csv.writer(fh)
+        writer.writerow([
+            'Sequence name', 'Region', 'HOR pattern (canonical)', 'Compressed pattern',
+            'Raw pattern', 'HOR length (monomers)', 'Start monomer idx', 'End monomer idx',
+            'Start position', 'End position', 'Copies', 'Mean identity'
+        ])
+        for r in results:
+            writer.writerow([
+                r['seq_name'], r['region'], r['pattern'], r['compressed_pattern'],
+                r['raw_pattern'], r['hor_len'],
+                r['start_mono'], r['end_mono'],
+                r['start_pos'], r['end_pos'], r['copies'],
+                r['mean_identity']
+            ])
+
+    # 3) Statistics per (region, pattern)
+    #   - occ          : number of occurrences
+    #   - copies       : sum of copies across all occurrences
+    #   - identities   : list of mean identities
+    #   - max_copies   : maximum copies in a single occurrence
+    #   - total_span   : sum of (end_pos - start_pos) across all occurrences
+    stats = defaultdict(lambda: {
+        'occ': 0, 'copies': 0, 'identities': [],
+        'max_copies': 0, 'total_span': 0
+    })
+    for r in results:
+        key = (r['region'], r['pattern'])
+        stats[key]['occ'] += 1
+        stats[key]['copies'] += r['copies']
+        stats[key]['identities'].append(r['mean_identity'])
+        stats[key]['max_copies'] = max(stats[key]['max_copies'], r['copies'])
+        stats[key]['total_span'] += r['end_pos'] - r['start_pos']
+
+    # Sort by: region position ASC → total_span DESC → occ DESC → max_copies DESC
+    keys_sorted = sorted(
+        stats.keys(),
+        key=lambda k: (
+            _region_sort_key(k[0]),
+            -stats[k]['total_span'],
+            -stats[k]['occ'],
+            -stats[k]['max_copies']
+        )
+    )
+
+    stat_txt = out_prefix + '_allHORStats.txt'
+    with open(stat_txt, 'w') as fh:
+        fh.write('Region\tHOR pattern\tOccurrences\tTotal copies\tTotal span (bp)\t'
+                 'Max copies\tMean identity\tMedian identity\n')
+        for key in keys_sorted:
+            region, pattern = key
+            s = stats[key]
+            mean_id = np.mean(s['identities'])
+            median_id = np.median(s['identities'])
+            fh.write(f"{region}\t{pattern}\t{s['occ']}\t{s['copies']}\t"
+                     f"{s['total_span']}\t{s['max_copies']}\t"
+                     f"{mean_id:.6f}\t{median_id:.6f}\n")
+
+    # 2) Distinct canonical patterns PER REGION
+    #    Use the same order as stat_txt for consistency
+    pat_txt = out_prefix + '_allHORPatterns.txt'
+    seen_patterns = set()
+    with open(pat_txt, 'w') as fh:
+        fh.write('Region\tHOR pattern\n')
+        for key in keys_sorted:
+            region, pattern = key
+            if pattern not in seen_patterns:
+                seen_patterns.add(pattern)
+                fh.write(f"{region}\t{pattern}\n")
+
+    # 4) Distinct compressed patterns PER REGION
+    #    Use the same order as stat_txt / pat_txt for consistency
+    pattern_to_compressed = {}
+    for r in results:
+        pattern_to_compressed[r['pattern']] = r['compressed_pattern']
+
+    comp_txt = out_prefix + '_allHORPatterns_compressed.txt'
+    seen_patterns_comp = set()
+    with open(comp_txt, 'w') as fh:
+        fh.write('Region\tCompressed pattern\n')
+        for key in keys_sorted:
+            region, pattern = key
+            if pattern not in seen_patterns_comp:
+                seen_patterns_comp.add(pattern)
+                comp = pattern_to_compressed.get(pattern, pattern)
+                fh.write(f"{region}\t{comp}\n")
+
+    return hor_csv, pat_txt, stat_txt, comp_txt
+
+
+# ============================================================================
+# Main
+# ============================================================================
+
+def main():
+    parser = argparse.ArgumentParser(
+        description='Detect all possible HORs from centroAnno *_decomposedResult.csv',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Example:
+  python detectHORs.py -i sample_decomposedResult.csv -o ./out/sample
+  python detectHORs.py -i chr1_decomposedResult.csv -o ./out/chr1 -m 50 -c 2
+""")
+    parser.add_argument('-i', '--input', required=True,
+                        help='Input *_decomposedResult.csv from centroAnno')
+    parser.add_argument('-o', '--output', required=True,
+                        help='Output prefix (path + basename)')
+    parser.add_argument('-m', '--max-hor-len', type=int, default=50,
+                        help='Maximum HOR length in monomers (default: 50)')
+    parser.add_argument('-c', '--min-copies', type=int, default=2,
+                        help='Minimum number of HOR copies in a region (default: 2)')
+    parser.add_argument('--min-identity', type=float, default=0.90,
+                        help='Minimum mean identity of HOR region (default: 0.90)')
+    parser.add_argument('--min-max-copies', type=int, default=2,
+                        help='Minimum max copies for a (region, pattern) to be '
+                             'reported as HOR (default: 2)')
+    args = parser.parse_args()
+
+    if not os.path.isfile(args.input):
+        print(f"[Error] Input file not found: {args.input}", file=sys.stderr)
+        sys.exit(1)
+
+    out_dir = os.path.dirname(args.output)
+    if out_dir and not os.path.isdir(out_dir):
+        os.makedirs(out_dir, exist_ok=True)
+
+    print(f"[detectHORs] Reading {args.input} ...")
+    records_by_region, total = parse_csv(args.input)
+    n_regions = len(records_by_region)
+    print(f"[detectHORs] Loaded {total} monomer records across {n_regions} region(s).")
+
+    all_results = []
+    for region_key, records in records_by_region.items():
+        if len(records) < 4:
+            continue
+        print(f"[detectHORs]   Region {region_key}: {len(records)} monomers")
+        region_results = detect_all_hors(
+            records, args.max_hor_len, args.min_copies, args.min_identity)
+        all_results.extend(region_results)
+
+    all_results = compress_all_patterns(all_results)
+
+    # Filter by min-max-copies (pattern-level): keep only (region, pattern)
+    # whose maximum copies across all occurrences >= threshold
+    if args.min_max_copies > 1:
+        pattern_max_copies = defaultdict(int)
+        for r in all_results:
+            key = (r['region'], r['pattern'])
+            pattern_max_copies[key] = max(pattern_max_copies[key], r['copies'])
+        before = len(all_results)
+        all_results = [
+            r for r in all_results
+            if pattern_max_copies[(r['region'], r['pattern'])] >= args.min_max_copies
+        ]
+        after = len(all_results)
+        print(f"[detectHORs] Filtered by --min-max-copies={args.min_max_copies}: "
+              f"{before - after} occurrence(s) removed, {after} kept.")
+
+    hor_csv, pat_txt, stat_txt, comp_txt = write_outputs(all_results, args.output)
+
+    print(f"[detectHORs] Done!")
+    print(f"[detectHORs]   Regions processed : {n_regions}")
+    print(f"[detectHORs]   HOR occurrences   : {len(all_results)}")
+    print(f"[detectHORs]   Distinct patterns : {len(set((r['region'], r['pattern']) for r in all_results))}")
+    print(f"[detectHORs]   Output files:")
+    print(f"[detectHORs]     {hor_csv}")
+    print(f"[detectHORs]     {pat_txt}")
+    print(f"[detectHORs]     {stat_txt}")
+    print(f"[detectHORs]     {comp_txt}")
+
+
+if __name__ == '__main__':
+    main()
