@@ -131,7 +131,7 @@ When the pipeline finishes, check:
 | `-i FILE` | Input FASTA/FASTQ file **(required)** |
 | `-o DIR` | Output directory **(required)** |
 | `-x MODE` | Analysis mode: `anno-asm` (default), `anno-sat-asm`, or `anno-read` |
-| `-m FILE` | Monomer template FASTA (optional; skips *de novo* inference) |
+| `-m FILE` | Monomer template FASTA (**anno-asm only**; optional; skips *de novo* inference) |
 | `-t INT` | Threads [default: 8] |
 | `-k INT` | k-mer size [default: 10] |
 | `-f FLOAT` | FPS cutoff [default: 0.6] |
