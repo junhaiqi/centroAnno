@@ -244,7 +244,7 @@ So **`-F`/`-f` is optional if you skip Stage 3 and Stage 5**.
 
 Each component can also be run independently for fine-grained control.
 
-### 1. `centroAnno` — monomer decomposition
+### 1. `centroAnno` — monomer inference / decomposition
 
 ```bash
 # Whole chromosome / genome assembly (default mode)
