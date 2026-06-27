@@ -14,6 +14,10 @@
   <img src="https://img.shields.io/badge/platform-Linux-green" alt="Linux">
 </p>
 
+<p align="center">
+  <img src="assets/centroAnno_workflow.png" width="1000" alt="centroAnno logo">
+</p>
+
 ---
 
 **centroAnno** is a reference-free toolkit for the *de novo* identification, monomer-level decomposition, higher-order repeat (HOR) inference, and centromeric satellite array (CenSatArray) detection of centromere-associated satellite DNA directly from whole-genome assemblies, isolated centromeric subregions, or raw long-read sequencing data.
