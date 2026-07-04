@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/junhaiqi/centroAnno/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-GPL-3.0-yellow.svg" alt="License: MIT"></a>
+  <a href="https://github.com/junhaiqi/centroAnno/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-GPL3.0-yellow.svg" alt="License: MIT"></a>
   <img src="https://img.shields.io/badge/language-C%2B%2B11%20%7C%20Python3-blue" alt="C++11 / Python3">
   <img src="https://img.shields.io/badge/platform-Linux-green" alt="Linux">
 </p>
