@@ -20,7 +20,7 @@
 
 ---
 
-**centroAnno** is a reference-free toolkit for the *de novo* identification, monomer-level decomposition, higher-order repeat (HOR) inference, and centromeric satellite array (CenSatArray) detection of centromere-associated satellite DNA directly from whole-genome assemblies, isolated centromeric subregions, or raw long-read sequencing data.
+centroAnno is a reference-free toolkit for the de novo identification and monomer-level decomposition of centromere-associated satellite DNA, higher-order repeat (HOR) reconstruction, and localization of structurally organized centromeric satellite arrays (CenSatArray) directly from whole-genome assemblies. The highest-ranked primary array is designated as the CoreSatArray. The toolkit also supports predefined genomic regions and read-like sequence inputs.
 
 Unlike existing tools that require predefined monomer libraries, manually extracted centromeric sequences, or external post-processing, centroAnno performs **end-to-end hierarchical reconstruction** in a single command.
 
